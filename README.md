@@ -2,6 +2,8 @@
 
 E-commerce platform for medical equipment.
 
+> **[Read the full documentation on the Wiki](https://github.com/Mega-Knight-MK3/althea-systems/wiki)** — project overview, architecture, and contributing guidelines.
+
 ## Stack
 
 | App | Tech | Port |
