@@ -1,0 +1,9 @@
+{
+  "name": "althea-systems",
+  "private": true,
+  "scripts": {
+    "dev:storefront": "pnpm --filter storefront dev",
+    "dev:backoffice": "pnpm --filter backoffice dev",
+    "dev:api": "pnpm --filter api dev"
+  }
+}
