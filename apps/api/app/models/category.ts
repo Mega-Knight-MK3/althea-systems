@@ -1,6 +1,6 @@
 import { DateTime } from 'luxon'
-import { BaseModel, column, hasMany } from '@adonisjs/lucid/orm'
-import type { HasMany } from '@adonisjs/lucid/types/relations'
+import { BaseModel, belongsTo, column, hasMany } from '@adonisjs/lucid/orm'
+import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
 import Product from '#models/product'
 
 export default class Category extends BaseModel {
@@ -19,12 +19,24 @@ export default class Category extends BaseModel {
   @column()
   declare parentId: number | null
 
-  @hasMany(() => Product)
-  declare products: HasMany<typeof Product>
+  @column()
+  declare imagePath: string | null
+
+  @column()
+  declare position: number
 
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
 
   @column.dateTime({ autoCreate: true, autoUpdate: true })
-  declare updatedAt: DateTime
+  declare updatedAt: DateTime | null
+
+  @belongsTo(() => Category, { foreignKey: 'parentId' })
+  declare parent: BelongsTo<typeof Category>
+
+  @hasMany(() => Category, { foreignKey: 'parentId' })
+  declare children: HasMany<typeof Category>
+
+  @hasMany(() => Product)
+  declare products: HasMany<typeof Product>
 }

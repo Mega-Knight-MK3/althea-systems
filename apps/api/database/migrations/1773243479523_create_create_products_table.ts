@@ -11,11 +11,18 @@ export default class extends BaseSchema {
       table.text('description').nullable()
       table.decimal('price', 10, 2).notNullable()
       table.integer('stock').notNullable().defaultTo(0)
-      table.integer('category_id').unsigned().notNullable().references('id').inTable('categories').onDelete('CASCADE')
+      table
+        .integer('category_id')
+        .unsigned()
+        .nullable()
+        .references('id')
+        .inTable('categories')
+        .onDelete('SET NULL')
       table.boolean('is_active').notNullable().defaultTo(true)
+      table.integer('sort_priority').notNullable().defaultTo(0)
 
       table.timestamp('created_at').notNullable()
-      table.timestamp('updated_at').notNullable()
+      table.timestamp('updated_at').nullable()
     })
   }
 

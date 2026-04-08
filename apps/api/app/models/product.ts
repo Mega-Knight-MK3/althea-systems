@@ -1,5 +1,5 @@
 import { DateTime } from 'luxon'
-import { BaseModel, column, belongsTo } from '@adonisjs/lucid/orm'
+import { BaseModel, belongsTo, column } from '@adonisjs/lucid/orm'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
 import Category from '#models/category'
 
@@ -23,17 +23,20 @@ export default class Product extends BaseModel {
   declare stock: number
 
   @column()
-  declare categoryId: number
+  declare categoryId: number | null
 
   @column()
   declare isActive: boolean
 
-  @belongsTo(() => Category)
-  declare category: BelongsTo<typeof Category>
+  @column()
+  declare sortPriority: number
 
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
 
   @column.dateTime({ autoCreate: true, autoUpdate: true })
-  declare updatedAt: DateTime
+  declare updatedAt: DateTime | null
+
+  @belongsTo(() => Category)
+  declare category: BelongsTo<typeof Category>
 }

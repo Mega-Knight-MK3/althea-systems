@@ -9,10 +9,18 @@ export default class extends BaseSchema {
       table.string('name').notNullable()
       table.string('slug').notNullable().unique()
       table.text('description').nullable()
-      table.integer('parent_id').unsigned().nullable().references('id').inTable('categories').onDelete('CASCADE')
+      table
+        .integer('parent_id')
+        .unsigned()
+        .nullable()
+        .references('id')
+        .inTable('categories')
+        .onDelete('SET NULL')
+      table.string('image_path').nullable()
+      table.integer('position').notNullable().defaultTo(0)
 
       table.timestamp('created_at').notNullable()
-      table.timestamp('updated_at').notNullable()
+      table.timestamp('updated_at').nullable()
     })
   }
 
