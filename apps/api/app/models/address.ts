@@ -21,7 +21,7 @@ export default class Address extends BaseModel {
   @column()
   declare street: string
 
-  @column()
+  @column({ columnName: 'line2' })
   declare line2: string | null
 
   @column()
