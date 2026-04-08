@@ -1,19 +1,22 @@
 <script setup lang="ts">
 import type { Address, AddressInput } from '~/composables/useAccount'
+import { countryName } from '~~/app/data/countries'
 
 definePageMeta({ middleware: 'auth' })
 useHead({ title: 'Adresses — Althea Systems' })
 
 const account = useAccountApi()
+const toast = useToast()
 
 const addresses = ref<Address[]>([])
 const editing = ref<Address | null>(null)
 const showForm = ref(false)
 const errorMessage = ref<string | null>(null)
 const loading = ref(false)
+const initialLoading = ref(true)
 
 const emptyForm: AddressInput = {
-  type: 'billing',
+  type: 'shipping',
   fullName: '',
   street: '',
   line2: '',
@@ -30,11 +33,16 @@ async function refresh() {
   addresses.value = await account.listAddresses()
 }
 
-await refresh()
+try {
+  await refresh()
+} finally {
+  initialLoading.value = false
+}
 
 function openCreate() {
   editing.value = null
   form.value = { ...emptyForm }
+  errorMessage.value = null
   showForm.value = true
 }
 
@@ -52,6 +60,7 @@ function openEdit(address: Address) {
     phone: address.phone ?? '',
     isDefault: address.isDefault,
   }
+  errorMessage.value = null
   showForm.value = true
 }
 
@@ -61,8 +70,10 @@ async function saveAddress() {
   try {
     if (editing.value) {
       await account.updateAddress(editing.value.id, form.value)
+      toast.success('Adresse mise à jour.')
     } else {
       await account.createAddress(form.value)
+      toast.success('Adresse ajoutée.')
     }
     await refresh()
     showForm.value = false
@@ -75,8 +86,13 @@ async function saveAddress() {
 
 async function removeAddress(id: number) {
   if (!confirm('Supprimer cette adresse ?')) return
-  await account.deleteAddress(id)
-  await refresh()
+  try {
+    await account.deleteAddress(id)
+    toast.success('Adresse supprimée.')
+    await refresh()
+  } catch (err) {
+    toast.error(extractFirstError(err) ?? 'Suppression impossible.')
+  }
 }
 </script>
 
@@ -86,8 +102,14 @@ async function removeAddress(id: number) {
       ← Mon compte
     </NuxtLink>
     <header class="mt-2 flex flex-wrap items-end justify-between gap-4">
-      <h1 class="font-display text-h1 font-medium text-brand-text">Carnet d’adresses</h1>
+      <div>
+        <h1 class="font-display text-h1 font-medium text-brand-text">Carnet d’adresses</h1>
+        <p class="mt-2 text-sm text-neutral-600">
+          Gérez vos adresses de livraison et de facturation.
+        </p>
+      </div>
       <button
+        v-if="addresses.length"
         type="button"
         class="bg-brand-500 hover:bg-brand-700 rounded-md px-4 py-2 text-sm font-medium text-white transition-colors"
         @click="openCreate"
@@ -96,16 +118,23 @@ async function removeAddress(id: number) {
       </button>
     </header>
 
-    <ul v-if="addresses.length" class="mt-8 grid gap-4 md:grid-cols-2">
+    <div v-if="initialLoading" class="mt-8 grid gap-4 md:grid-cols-2">
+      <AppSkeleton class="h-40" />
+      <AppSkeleton class="h-40" />
+    </div>
+
+    <ul v-else-if="addresses.length" class="mt-8 grid gap-4 md:grid-cols-2">
       <li
         v-for="address in addresses"
         :key="address.id"
-        class="rounded-xl border border-neutral-100 bg-white p-5"
+        class="flex flex-col rounded-xl border border-neutral-100 bg-white p-5"
       >
         <div class="flex items-start justify-between">
           <div>
             <p class="font-display text-base font-medium text-brand-text">{{ address.fullName }}</p>
-            <p class="text-caption mt-1 text-neutral-500 uppercase">{{ address.type }}</p>
+            <p class="text-caption mt-1 text-neutral-500 uppercase">
+              {{ address.type === 'billing' ? 'Facturation' : 'Livraison' }}
+            </p>
           </div>
           <span
             v-if="address.isDefault"
@@ -114,24 +143,24 @@ async function removeAddress(id: number) {
             Par défaut
           </span>
         </div>
-        <p class="mt-3 text-sm text-neutral-700">
+        <p class="mt-3 flex-1 text-sm text-neutral-700">
           {{ address.street }}<br />
           <span v-if="address.line2">{{ address.line2 }}<br /></span>
           {{ address.postalCode }} {{ address.city }}<br />
-          <span v-if="address.region">{{ address.region }}, </span>{{ address.country }}<br />
-          <span v-if="address.phone">{{ address.phone }}</span>
+          <span v-if="address.region">{{ address.region }}, </span>{{ countryName(address.country) }}<br />
+          <span v-if="address.phone" class="text-neutral-500">{{ address.phone }}</span>
         </p>
         <div class="mt-4 flex gap-2 text-sm">
           <button
             type="button"
-            class="rounded-md border border-neutral-200 px-3 py-1 text-neutral-700 hover:border-brand-500 hover:text-brand-500"
+            class="rounded-md border border-neutral-200 px-3 py-1 text-neutral-700 transition-colors hover:border-brand-500 hover:text-brand-500"
             @click="openEdit(address)"
           >
             Modifier
           </button>
           <button
             type="button"
-            class="rounded-md border border-neutral-200 px-3 py-1 text-neutral-700 hover:border-danger hover:text-danger"
+            class="hover:border-danger hover:text-danger rounded-md border border-neutral-200 px-3 py-1 text-neutral-700 transition-colors"
             @click="removeAddress(address.id)"
           >
             Supprimer
@@ -140,146 +169,49 @@ async function removeAddress(id: number) {
       </li>
     </ul>
 
-    <p v-else class="mt-8 text-sm text-neutral-500">
-      Vous n’avez pas encore d’adresse enregistrée.
-    </p>
-
-    <Teleport to="body">
-      <div
-        v-if="showForm"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-neutral-900/50 p-4"
-        @click.self="showForm = false"
+    <div
+      v-else
+      class="bg-brand-50 mt-8 flex flex-col items-center justify-center rounded-xl border border-dashed border-brand-300 py-16 text-center"
+    >
+      <svg
+        viewBox="0 0 24 24"
+        class="text-brand-500 mb-4 h-10 w-10"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.6"
+        stroke-linecap="round"
+        stroke-linejoin="round"
       >
-        <form
-          class="max-h-full w-full max-w-lg overflow-y-auto rounded-xl bg-white p-6"
-          @submit.prevent="saveAddress"
-        >
-          <h2 class="font-display text-h3 font-medium text-brand-text">
-            {{ editing ? 'Modifier l’adresse' : 'Nouvelle adresse' }}
-          </h2>
+        <path d="M12 21s-7-6.5-7-12a7 7 0 1 1 14 0c0 5.5-7 12-7 12z" />
+        <circle cx="12" cy="9" r="2.5" />
+      </svg>
+      <h2 class="font-display text-h3 font-medium text-brand-text">Aucune adresse enregistrée</h2>
+      <p class="mt-2 max-w-sm text-sm text-neutral-600">
+        Ajoutez une adresse de livraison et de facturation pour finaliser vos commandes plus
+        rapidement.
+      </p>
+      <button
+        type="button"
+        class="bg-brand-500 hover:bg-brand-700 mt-6 rounded-md px-5 py-3 text-sm font-medium text-white transition-colors"
+        @click="openCreate"
+      >
+        Ajouter ma première adresse
+      </button>
+    </div>
 
-          <div class="mt-6 space-y-4">
-            <label class="block">
-              <span class="text-caption text-neutral-500 uppercase">Type</span>
-              <select
-                v-model="form.type"
-                class="mt-1 w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
-              >
-                <option value="billing">Facturation</option>
-                <option value="shipping">Livraison</option>
-              </select>
-            </label>
-
-            <label class="block">
-              <span class="text-caption text-neutral-500 uppercase">Nom complet</span>
-              <input
-                v-model="form.fullName"
-                type="text"
-                required
-                class="mt-1 w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
-              />
-            </label>
-
-            <label class="block">
-              <span class="text-caption text-neutral-500 uppercase">Adresse</span>
-              <input
-                v-model="form.street"
-                type="text"
-                required
-                class="mt-1 w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
-              />
-            </label>
-
-            <label class="block">
-              <span class="text-caption text-neutral-500 uppercase">Complément</span>
-              <input
-                v-model="form.line2"
-                type="text"
-                class="mt-1 w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
-              />
-            </label>
-
-            <div class="grid grid-cols-2 gap-4">
-              <label class="block">
-                <span class="text-caption text-neutral-500 uppercase">Ville</span>
-                <input
-                  v-model="form.city"
-                  type="text"
-                  required
-                  class="mt-1 w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
-                />
-              </label>
-              <label class="block">
-                <span class="text-caption text-neutral-500 uppercase">Région</span>
-                <input
-                  v-model="form.region"
-                  type="text"
-                  class="mt-1 w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
-                />
-              </label>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-              <label class="block">
-                <span class="text-caption text-neutral-500 uppercase">Code postal</span>
-                <input
-                  v-model="form.postalCode"
-                  type="text"
-                  required
-                  class="mt-1 w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
-                />
-              </label>
-              <label class="block">
-                <span class="text-caption text-neutral-500 uppercase">Pays (ISO)</span>
-                <input
-                  v-model="form.country"
-                  type="text"
-                  maxlength="2"
-                  required
-                  class="mt-1 w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none uppercase"
-                />
-              </label>
-            </div>
-
-            <label class="block">
-              <span class="text-caption text-neutral-500 uppercase">Téléphone</span>
-              <input
-                v-model="form.phone"
-                type="tel"
-                class="mt-1 w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
-              />
-            </label>
-
-            <label class="inline-flex items-center gap-2 text-sm text-neutral-700">
-              <input
-                v-model="form.isDefault"
-                type="checkbox"
-                class="accent-brand-500 h-4 w-4 rounded border-neutral-300"
-              />
-              Adresse par défaut pour ce type
-            </label>
-          </div>
-
-          <AppFormError :message="errorMessage" />
-
-          <div class="mt-6 flex justify-end gap-2">
-            <button
-              type="button"
-              class="rounded-md border border-neutral-200 px-4 py-2 text-sm text-neutral-700"
-              @click="showForm = false"
-            >
-              Annuler
-            </button>
-            <button
-              type="submit"
-              class="bg-brand-500 hover:bg-brand-700 rounded-md px-4 py-2 text-sm font-medium text-white transition-colors disabled:bg-neutral-300"
-              :disabled="loading"
-            >
-              {{ loading ? 'Enregistrement…' : 'Enregistrer' }}
-            </button>
-          </div>
-        </form>
-      </div>
-    </Teleport>
+    <AppModal
+      :open="showForm"
+      :title="editing ? 'Modifier l’adresse' : 'Nouvelle adresse'"
+      @close="showForm = false"
+    >
+      <AppAddressForm
+        v-model="form"
+        :loading="loading"
+        :error-message="errorMessage"
+        :submit-label="editing ? 'Enregistrer les changements' : 'Ajouter cette adresse'"
+        @submit="saveAddress"
+        @cancel="showForm = false"
+      />
+    </AppModal>
   </section>
 </template>

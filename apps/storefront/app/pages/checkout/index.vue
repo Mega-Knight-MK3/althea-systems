@@ -88,13 +88,7 @@ const formatPrice = (value: number) =>
   <section class="mx-auto w-full max-w-[900px] px-4 py-12 md:px-10 md:py-16">
     <h1 class="font-display text-h1 font-medium text-brand-text">Finaliser ma commande</h1>
 
-    <ol class="text-caption mt-6 flex items-center gap-3 text-neutral-500 uppercase">
-      <li :class="step === 1 ? 'text-brand-500' : ''">1. Identification</li>
-      <li>›</li>
-      <li :class="step === 2 ? 'text-brand-500' : ''">2. Adresses</li>
-      <li>›</li>
-      <li :class="step === 3 ? 'text-brand-500' : ''">3. Paiement</li>
-    </ol>
+    <AppCheckoutSteps :current="step" />
 
     <section v-if="step === 1" class="mt-10 space-y-4 rounded-xl border border-neutral-100 bg-white p-6">
       <h2 class="font-display text-h3 font-medium text-brand-text">Identification</h2>
