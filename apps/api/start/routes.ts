@@ -6,6 +6,8 @@ const PasswordResetsController = () => import('#controllers/password_resets_cont
 const AccountController = () => import('#controllers/account_controller')
 const AddressesController = () => import('#controllers/addresses_controller')
 const PaymentMethodsController = () => import('#controllers/payment_methods_controller')
+const OrdersController = () => import('#controllers/orders_controller')
+const CheckoutController = () => import('#controllers/checkout_controller')
 const ProductsController = () => import('#controllers/products_controller')
 const CategoriesController = () => import('#controllers/categories_controller')
 const ProductImagesController = () => import('#controllers/product_images_controller')
@@ -49,11 +51,24 @@ router
 
     router.get('payment-methods', [PaymentMethodsController, 'index'])
     router.post('payment-methods', [PaymentMethodsController, 'store'])
+    router.post('payment-methods/setup-intent', [PaymentMethodsController, 'setupIntent'])
     router.patch('payment-methods/:id', [PaymentMethodsController, 'update'])
     router.delete('payment-methods/:id', [PaymentMethodsController, 'destroy'])
+
+    router.get('orders', [OrdersController, 'index'])
+    router.get('orders/:id', [OrdersController, 'show'])
+    router.post('orders', [OrdersController, 'store'])
+    router.get('orders/:id/invoice', [OrdersController, 'downloadInvoice'])
   })
   .prefix('/account')
   .use(middleware.auth())
+
+router
+  .group(() => {
+    router.post('quote', [CheckoutController, 'quote'])
+    router.post('intent', [CheckoutController, 'createPaymentIntent']).use(middleware.auth())
+  })
+  .prefix('/checkout')
 
 router
   .group(() => {
