@@ -13,10 +13,22 @@ useHead(() => ({ title: `${product.value?.name ?? 'Produit'} — Althea Systems`
 const { data: similar } = await useSimilarProducts(slug)
 const { data: imagesResult } = await useProductImages(slug)
 
+const cart = useCart()
+
 const images = computed(() => imagesResult.value ?? [])
 const similarProducts = computed(() => similar.value ?? [])
 const activeImageIndex = ref(0)
 const inStock = computed(() => (product.value?.stock ?? 0) > 0)
+const justAdded = ref(false)
+
+function addToCart() {
+  if (!product.value || !inStock.value) return
+  cart.add(product.value, 1)
+  justAdded.value = true
+  setTimeout(() => {
+    justAdded.value = false
+  }, 2000)
+}
 const formattedPrice = computed(() =>
   new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(
     product.value?.price ?? 0
@@ -108,8 +120,9 @@ const formattedPrice = computed(() =>
           type="button"
           class="bg-brand-500 hover:bg-brand-700 mt-8 inline-flex items-center justify-center rounded-md px-6 py-3 text-sm font-medium text-white transition-colors disabled:cursor-not-allowed disabled:bg-neutral-300"
           :disabled="!inStock"
+          @click="addToCart"
         >
-          {{ inStock ? 'Ajouter au panier' : 'En rupture de stock' }}
+          {{ inStock ? (justAdded ? 'Ajouté !' : 'Ajouter au panier') : 'En rupture de stock' }}
         </button>
       </div>
     </div>

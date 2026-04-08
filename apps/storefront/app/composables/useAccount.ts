@@ -40,11 +40,6 @@ export interface AddressInput {
 
 export interface PaymentMethodInput {
   stripePaymentMethodId: string
-  type?: string
-  brand?: string | null
-  lastFour: string
-  expMonth?: number
-  expYear?: number
   isDefault?: boolean
 }
 
@@ -70,6 +65,8 @@ export function useAccountApi() {
       api(`/account/addresses/${id}`, { method: 'DELETE' }),
 
     listPaymentMethods: () => api<PaymentMethod[]>('/account/payment-methods'),
+    createSetupIntent: () =>
+      api<{ clientSecret: string }>('/account/payment-methods/setup-intent', { method: 'POST' }),
     createPaymentMethod: (payload: PaymentMethodInput) =>
       api<PaymentMethod>('/account/payment-methods', { method: 'POST', body: payload }),
     setDefaultPaymentMethod: (id: number) =>
