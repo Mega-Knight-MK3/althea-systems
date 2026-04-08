@@ -6,6 +6,7 @@ import {
   updatePaymentMethodValidator,
 } from '#validators/account'
 import { stripeClient } from '#services/stripe_service'
+import { ensureStripeCustomer } from '#services/stripe_customer'
 
 export default class PaymentMethodsController {
   async index({ auth }: HttpContext) {
@@ -18,7 +19,9 @@ export default class PaymentMethodsController {
 
   async setupIntent({ auth }: HttpContext) {
     const user = auth.getUserOrFail()
+    const customerId = await ensureStripeCustomer(user)
     const intent = await stripeClient().setupIntents.create({
+      customer: customerId,
       payment_method_types: ['card'],
       usage: 'off_session',
       metadata: { user_id: String(user.id), user_email: user.email },
@@ -78,6 +81,13 @@ export default class PaymentMethodsController {
       .where('id', params.id)
       .where('userId', user.id)
       .firstOrFail()
+
+    if (user.stripeCustomerId) {
+      try {
+        await stripeClient().paymentMethods.detach(method.stripePaymentMethodId)
+      } catch {}
+    }
+
     await method.delete()
     return response.noContent()
   }
