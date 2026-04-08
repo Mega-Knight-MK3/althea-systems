@@ -15,4 +15,13 @@ export default await Env.create(new URL('../', import.meta.url), {
 
   MONGO_URI: Env.schema.string(),
   MONGO_DATABASE: Env.schema.string(),
+
+  MAIL_DRIVER: Env.schema.enum.optional(['smtp', 'log'] as const),
+  MAIL_FROM_ADDRESS: Env.schema.string.optional(),
+  MAIL_FROM_NAME: Env.schema.string.optional(),
+  SMTP_HOST: Env.schema.string.optional({ format: 'host' }),
+  SMTP_PORT: Env.schema.number.optional(),
+
+  STOREFRONT_URL: Env.schema.string({ format: 'url', tld: false }),
+  STRIPE_SECRET_KEY: Env.schema.string.optional(),
 })
