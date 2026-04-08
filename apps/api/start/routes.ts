@@ -5,8 +5,11 @@ const AuthController = () => import('#controllers/auth_controller')
 const ProductsController = () => import('#controllers/products_controller')
 const CategoriesController = () => import('#controllers/categories_controller')
 const ProductImagesController = () => import('#controllers/product_images_controller')
+const SiteConfigController = () => import('#controllers/site_config_controller')
 
 router.get('/', async () => ({ hello: 'world' }))
+
+router.get('/site-config/homepage', [SiteConfigController, 'homepage'])
 
 router
   .group(() => {
