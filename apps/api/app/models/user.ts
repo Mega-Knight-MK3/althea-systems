@@ -35,6 +35,9 @@ export default class User extends compose(BaseModel, AuthFinder) {
   @column()
   declare isActive: boolean
 
+  @column()
+  declare stripeCustomerId: string | null
+
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
 

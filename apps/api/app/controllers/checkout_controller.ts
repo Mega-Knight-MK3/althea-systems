@@ -2,6 +2,7 @@ import type { HttpContext } from '@adonisjs/core/http'
 import { quoteValidator, createPaymentIntentValidator } from '#validators/checkout'
 import { quoteCart } from '#services/cart_pricing'
 import { stripeClient, stripeCurrency, toMinorUnits } from '#services/stripe_service'
+import { ensureStripeCustomer } from '#services/stripe_customer'
 
 export default class CheckoutController {
   async quote({ request }: HttpContext) {
@@ -25,9 +26,12 @@ export default class CheckoutController {
       return response.unprocessableEntity({ message: 'Panier vide.' })
     }
 
+    const customerId = await ensureStripeCustomer(user)
     const intent = await stripeClient().paymentIntents.create({
       amount: toMinorUnits(quote.total),
       currency: stripeCurrency(),
+      customer: customerId,
+      setup_future_usage: 'off_session',
       automatic_payment_methods: { enabled: true },
       metadata: { user_id: String(user.id) },
     })
