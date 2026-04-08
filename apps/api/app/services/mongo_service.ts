@@ -1,44 +1,50 @@
-import { MongoClient, GridFSBucket } from 'mongodb'
+import { MongoClient, GridFSBucket, type Db } from 'mongodb'
 import env from '#start/env'
+
+const IMAGES_BUCKET = 'images'
 
 class MongoService {
   private client: MongoClient | null = null
+  private db: Db | null = null
   private bucket: GridFSBucket | null = null
 
   async connect() {
-    if (this.client) {
-      return
-    }
+    if (this.client) return
 
-    this.client = new MongoClient(env.get('MONGO_URI'))
-    await this.client.connect()
+    const client = new MongoClient(env.get('MONGO_URI'))
+    await client.connect()
 
-    const db = this.client.db(env.get('MONGO_DATABASE'))
-    this.bucket = new GridFSBucket(db, { bucketName: 'images' })
+    this.client = client
+    this.db = client.db(env.get('MONGO_DATABASE'))
+    this.bucket = new GridFSBucket(this.db, { bucketName: IMAGES_BUCKET })
   }
 
   async disconnect() {
-    if (!this.client) {
-      return
-    }
+    if (!this.client) return
 
     await this.client.close()
     this.client = null
+    this.db = null
     this.bucket = null
   }
 
-  getBucket() {
-    if (!this.bucket) {
-      throw new Error('MongoDB not connected')
-    }
-    return this.bucket
+  getClient() {
+    return this.requireConnection(this.client, 'client')
   }
 
-  getClient() {
-    if (!this.client) {
-      throw new Error('MongoDB not connected')
+  getDb() {
+    return this.requireConnection(this.db, 'database')
+  }
+
+  getBucket() {
+    return this.requireConnection(this.bucket, 'images bucket')
+  }
+
+  private requireConnection<T>(value: T | null, name: string): T {
+    if (!value) {
+      throw new Error(`MongoDB ${name} is not connected — call connect() first`)
     }
-    return this.client
+    return value
   }
 }
 
