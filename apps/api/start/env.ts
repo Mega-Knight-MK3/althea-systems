@@ -24,4 +24,5 @@ export default await Env.create(new URL('../', import.meta.url), {
 
   STOREFRONT_URL: Env.schema.string({ format: 'url', tld: false }),
   STRIPE_SECRET_KEY: Env.schema.string.optional(),
+  STRIPE_CURRENCY: Env.schema.string.optional(),
 })

@@ -5,6 +5,7 @@ import {
   createPaymentMethodValidator,
   updatePaymentMethodValidator,
 } from '#validators/account'
+import { stripeClient } from '#services/stripe_service'
 
 export default class PaymentMethodsController {
   async index({ auth }: HttpContext) {
@@ -15,9 +16,25 @@ export default class PaymentMethodsController {
       .orderBy('id', 'desc')
   }
 
+  async setupIntent({ auth }: HttpContext) {
+    const user = auth.getUserOrFail()
+    const intent = await stripeClient().setupIntents.create({
+      payment_method_types: ['card'],
+      usage: 'off_session',
+      metadata: { user_id: String(user.id), user_email: user.email },
+    })
+    return { clientSecret: intent.client_secret }
+  }
+
   async store({ auth, request, response }: HttpContext) {
     const user = auth.getUserOrFail()
     const payload = await request.validateUsing(createPaymentMethodValidator)
+
+    const stripePm = await stripeClient().paymentMethods.retrieve(payload.stripePaymentMethodId)
+    if (stripePm.type !== 'card' || !stripePm.card) {
+      return response.unprocessableEntity({ message: 'Type de carte non supporté.' })
+    }
+    const card = stripePm.card
 
     const method = await db.transaction(async (trx) => {
       if (payload.isDefault) await clearDefault(user.id, trx)
@@ -25,12 +42,12 @@ export default class PaymentMethodsController {
       created.useTransaction(trx)
       created.merge({
         userId: user.id,
-        type: payload.type ?? 'card',
-        stripePaymentMethodId: payload.stripePaymentMethodId,
-        brand: payload.brand ?? null,
-        lastFour: payload.lastFour,
-        expMonth: payload.expMonth ?? null,
-        expYear: payload.expYear ?? null,
+        type: 'card',
+        stripePaymentMethodId: stripePm.id,
+        brand: card.brand,
+        lastFour: card.last4,
+        expMonth: card.exp_month,
+        expYear: card.exp_year,
         isDefault: payload.isDefault ?? false,
       })
       return created.save()

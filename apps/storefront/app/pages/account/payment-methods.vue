@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { PaymentMethod, PaymentMethodInput } from '~/composables/useAccount'
+import type { PaymentMethod } from '~/composables/useAccount'
 
 definePageMeta({ middleware: 'auth' })
 useHead({ title: 'Moyens de paiement — Althea Systems' })
@@ -9,18 +9,8 @@ const account = useAccountApi()
 const methods = ref<PaymentMethod[]>([])
 const showForm = ref(false)
 const errorMessage = ref<string | null>(null)
-const loading = ref(false)
-
-const emptyForm: PaymentMethodInput = {
-  stripePaymentMethodId: '',
-  type: 'card',
-  brand: 'Visa',
-  lastFour: '',
-  expMonth: undefined,
-  expYear: undefined,
-  isDefault: false,
-}
-const form = ref<PaymentMethodInput>({ ...emptyForm })
+const setupClientSecret = ref<string | null>(null)
+const setAsDefault = ref(false)
 
 async function refresh() {
   methods.value = await account.listPaymentMethods()
@@ -28,23 +18,35 @@ async function refresh() {
 
 await refresh()
 
-function openCreate() {
-  form.value = { ...emptyForm }
-  showForm.value = true
+async function openCreate() {
+  errorMessage.value = null
+  setAsDefault.value = false
+  try {
+    const intent = await account.createSetupIntent()
+    setupClientSecret.value = intent.clientSecret
+    showForm.value = true
+  } catch (err) {
+    errorMessage.value = extractFirstError(err) ?? 'Impossible de préparer Stripe.'
+  }
 }
 
-async function saveMethod() {
+async function onCardSuccess(paymentMethodId: string) {
   errorMessage.value = null
-  loading.value = true
   try {
-    await account.createPaymentMethod(form.value)
+    await account.createPaymentMethod({
+      stripePaymentMethodId: paymentMethodId,
+      isDefault: setAsDefault.value,
+    })
     await refresh()
     showForm.value = false
+    setupClientSecret.value = null
   } catch (err) {
     errorMessage.value = extractFirstError(err) ?? 'Une erreur est survenue.'
-  } finally {
-    loading.value = false
   }
+}
+
+function onCardError(message: string) {
+  errorMessage.value = message
 }
 
 async function setDefault(id: number) {
@@ -76,7 +78,8 @@ async function removeMethod(id: number) {
     </header>
 
     <p class="mt-2 text-sm text-neutral-500">
-      Aucune donnée bancaire sensible n’est stockée — les cartes sont enregistrées via Stripe.
+      Aucune donnée bancaire sensible n’est stockée sur nos serveurs — les cartes sont enregistrées
+      via Stripe.
     </p>
 
     <ul v-if="methods.length" class="mt-8 grid gap-4 md:grid-cols-2">
@@ -87,7 +90,7 @@ async function removeMethod(id: number) {
       >
         <div class="flex items-start justify-between">
           <div>
-            <p class="font-display text-base font-medium text-brand-text">
+            <p class="font-display text-base font-medium text-brand-text capitalize">
               {{ method.brand ?? 'Carte' }} •••• {{ method.lastFour }}
             </p>
             <p v-if="method.expMonth && method.expYear" class="text-caption mt-1 text-neutral-500">
@@ -131,102 +134,41 @@ async function removeMethod(id: number) {
         class="fixed inset-0 z-50 flex items-center justify-center bg-neutral-900/50 p-4"
         @click.self="showForm = false"
       >
-        <form
-          class="max-h-full w-full max-w-lg overflow-y-auto rounded-xl bg-white p-6"
-          @submit.prevent="saveMethod"
-        >
+        <div class="max-h-full w-full max-w-md overflow-y-auto rounded-xl bg-white p-6">
           <h2 class="font-display text-h3 font-medium text-brand-text">Nouvelle carte</h2>
           <p class="mt-2 text-caption text-neutral-500">
-            Saisissez l’identifiant Stripe Payment Method renvoyé par Stripe Elements (intégration
-            front-end Stripe à brancher avec une clé publique).
+            Saisissez les informations de votre carte. Le test Stripe accepte
+            <code>4242 4242 4242 4242</code>, n’importe quelle date future et n’importe quel CVC.
           </p>
 
-          <div class="mt-6 space-y-4">
-            <label class="block">
-              <span class="text-caption text-neutral-500 uppercase">Stripe payment method id</span>
-              <input
-                v-model="form.stripePaymentMethodId"
-                type="text"
-                required
-                placeholder="pm_..."
-                class="mt-1 w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
-              />
-            </label>
-
-            <div class="grid grid-cols-2 gap-4">
-              <label class="block">
-                <span class="text-caption text-neutral-500 uppercase">Marque</span>
-                <input
-                  v-model="form.brand"
-                  type="text"
-                  class="mt-1 w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
-                />
-              </label>
-              <label class="block">
-                <span class="text-caption text-neutral-500 uppercase">4 derniers chiffres</span>
-                <input
-                  v-model="form.lastFour"
-                  type="text"
-                  maxlength="4"
-                  pattern="[0-9]{4}"
-                  required
-                  class="mt-1 w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
-                />
-              </label>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-              <label class="block">
-                <span class="text-caption text-neutral-500 uppercase">Mois (1-12)</span>
-                <input
-                  v-model.number="form.expMonth"
-                  type="number"
-                  min="1"
-                  max="12"
-                  class="mt-1 w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
-                />
-              </label>
-              <label class="block">
-                <span class="text-caption text-neutral-500 uppercase">Année</span>
-                <input
-                  v-model.number="form.expYear"
-                  type="number"
-                  min="2024"
-                  max="2100"
-                  class="mt-1 w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
-                />
-              </label>
-            </div>
-
-            <label class="inline-flex items-center gap-2 text-sm text-neutral-700">
-              <input
-                v-model="form.isDefault"
-                type="checkbox"
-                class="accent-brand-500 h-4 w-4 rounded border-neutral-300"
-              />
-              Carte par défaut
-            </label>
+          <div class="mt-4">
+            <AppStripeCardForm
+              v-if="setupClientSecret"
+              :client-secret="setupClientSecret"
+              @success="onCardSuccess"
+              @error="onCardError"
+            />
           </div>
+
+          <label class="mt-4 inline-flex items-center gap-2 text-sm text-neutral-700">
+            <input
+              v-model="setAsDefault"
+              type="checkbox"
+              class="accent-brand-500 h-4 w-4 rounded border-neutral-300"
+            />
+            Définir par défaut
+          </label>
 
           <AppFormError :message="errorMessage" />
 
-          <div class="mt-6 flex justify-end gap-2">
-            <button
-              type="button"
-              class="rounded-md border border-neutral-200 px-4 py-2 text-sm text-neutral-700"
-              @click="showForm = false"
-            >
-              Annuler
-            </button>
-            <button
-              type="submit"
-              class="bg-brand-500 hover:bg-brand-700 rounded-md px-4 py-2 text-sm font-medium text-white transition-colors disabled:bg-neutral-300"
-              :disabled="loading"
-            >
-              {{ loading ? 'Enregistrement…' : 'Enregistrer' }}
-            </button>
-          </div>
-        </form>
+          <button
+            type="button"
+            class="mt-4 w-full rounded-md border border-neutral-200 px-4 py-2 text-sm text-neutral-700"
+            @click="showForm = false"
+          >
+            Annuler
+          </button>
+        </div>
       </div>
     </Teleport>
   </section>
