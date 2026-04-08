@@ -5,18 +5,24 @@ definePageMeta({ middleware: 'auth' })
 useHead({ title: 'Moyens de paiement — Althea Systems' })
 
 const account = useAccountApi()
+const toast = useToast()
 
 const methods = ref<PaymentMethod[]>([])
 const showForm = ref(false)
 const errorMessage = ref<string | null>(null)
 const setupClientSecret = ref<string | null>(null)
 const setAsDefault = ref(false)
+const initialLoading = ref(true)
 
 async function refresh() {
   methods.value = await account.listPaymentMethods()
 }
 
-await refresh()
+try {
+  await refresh()
+} finally {
+  initialLoading.value = false
+}
 
 async function openCreate() {
   errorMessage.value = null
@@ -26,7 +32,7 @@ async function openCreate() {
     setupClientSecret.value = intent.clientSecret
     showForm.value = true
   } catch (err) {
-    errorMessage.value = extractFirstError(err) ?? 'Impossible de préparer Stripe.'
+    toast.error(extractFirstError(err) ?? 'Impossible de préparer Stripe.')
   }
 }
 
@@ -40,6 +46,7 @@ async function onCardSuccess(paymentMethodId: string) {
     await refresh()
     showForm.value = false
     setupClientSecret.value = null
+    toast.success('Carte enregistrée.')
   } catch (err) {
     errorMessage.value = extractFirstError(err) ?? 'Une erreur est survenue.'
   }
@@ -50,14 +57,24 @@ function onCardError(message: string) {
 }
 
 async function setDefault(id: number) {
-  await account.setDefaultPaymentMethod(id)
-  await refresh()
+  try {
+    await account.setDefaultPaymentMethod(id)
+    await refresh()
+    toast.success('Carte par défaut mise à jour.')
+  } catch (err) {
+    toast.error(extractFirstError(err) ?? 'Mise à jour impossible.')
+  }
 }
 
 async function removeMethod(id: number) {
   if (!confirm('Supprimer cette carte ?')) return
-  await account.deletePaymentMethod(id)
-  await refresh()
+  try {
+    await account.deletePaymentMethod(id)
+    await refresh()
+    toast.success('Carte supprimée.')
+  } catch (err) {
+    toast.error(extractFirstError(err) ?? 'Suppression impossible.')
+  }
 }
 </script>
 
@@ -67,8 +84,14 @@ async function removeMethod(id: number) {
       ← Mon compte
     </NuxtLink>
     <header class="mt-2 flex flex-wrap items-end justify-between gap-4">
-      <h1 class="font-display text-h1 font-medium text-brand-text">Moyens de paiement</h1>
+      <div>
+        <h1 class="font-display text-h1 font-medium text-brand-text">Moyens de paiement</h1>
+        <p class="mt-2 text-sm text-neutral-600">
+          Aucune donnée bancaire sensible n’est stockée — les cartes sont enregistrées via Stripe.
+        </p>
+      </div>
       <button
+        v-if="methods.length"
         type="button"
         class="bg-brand-500 hover:bg-brand-700 rounded-md px-4 py-2 text-sm font-medium text-white transition-colors"
         @click="openCreate"
@@ -77,12 +100,12 @@ async function removeMethod(id: number) {
       </button>
     </header>
 
-    <p class="mt-2 text-sm text-neutral-500">
-      Aucune donnée bancaire sensible n’est stockée sur nos serveurs — les cartes sont enregistrées
-      via Stripe.
-    </p>
+    <div v-if="initialLoading" class="mt-8 grid gap-4 md:grid-cols-2">
+      <AppSkeleton class="h-32" />
+      <AppSkeleton class="h-32" />
+    </div>
 
-    <ul v-if="methods.length" class="mt-8 grid gap-4 md:grid-cols-2">
+    <ul v-else-if="methods.length" class="mt-8 grid gap-4 md:grid-cols-2">
       <li
         v-for="method in methods"
         :key="method.id"
@@ -115,7 +138,7 @@ async function removeMethod(id: number) {
           </button>
           <button
             type="button"
-            class="rounded-md border border-neutral-200 px-3 py-1 text-neutral-700 hover:border-danger hover:text-danger"
+            class="hover:border-danger hover:text-danger rounded-md border border-neutral-200 px-3 py-1 text-neutral-700"
             @click="removeMethod(method.id)"
           >
             Supprimer
@@ -124,52 +147,53 @@ async function removeMethod(id: number) {
       </li>
     </ul>
 
-    <p v-else class="mt-8 text-sm text-neutral-500">
-      Vous n’avez pas encore enregistré de carte.
-    </p>
-
-    <Teleport to="body">
-      <div
-        v-if="showForm"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-neutral-900/50 p-4"
-        @click.self="showForm = false"
+    <div
+      v-else
+      class="bg-brand-50 mt-8 flex flex-col items-center justify-center rounded-xl border border-dashed border-brand-300 py-16 text-center"
+    >
+      <svg viewBox="0 0 24 24" class="text-brand-500 mb-4 h-10 w-10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="6" width="18" height="13" rx="2" />
+        <path d="M3 11h18" />
+      </svg>
+      <h2 class="font-display text-h3 font-medium text-brand-text">Aucune carte enregistrée</h2>
+      <p class="mt-2 max-w-sm text-sm text-neutral-600">
+        Ajoutez une carte pour finaliser vos commandes en un clic.
+      </p>
+      <button
+        type="button"
+        class="bg-brand-500 hover:bg-brand-700 mt-6 rounded-md px-5 py-3 text-sm font-medium text-white transition-colors"
+        @click="openCreate"
       >
-        <div class="max-h-full w-full max-w-md overflow-y-auto rounded-xl bg-white p-6">
-          <h2 class="font-display text-h3 font-medium text-brand-text">Nouvelle carte</h2>
-          <p class="mt-2 text-caption text-neutral-500">
-            Saisissez les informations de votre carte. Le test Stripe accepte
-            <code>4242 4242 4242 4242</code>, n’importe quelle date future et n’importe quel CVC.
-          </p>
+        Ajouter ma première carte
+      </button>
+    </div>
 
-          <div class="mt-4">
-            <AppStripeCardForm
-              v-if="setupClientSecret"
-              :client-secret="setupClientSecret"
-              @success="onCardSuccess"
-              @error="onCardError"
-            />
-          </div>
+    <AppModal :open="showForm" title="Nouvelle carte" @close="showForm = false">
+      <p class="text-sm text-neutral-600">
+        Saisissez les informations de votre carte. En mode test Stripe, utilisez
+        <code class="rounded bg-neutral-100 px-1 py-0.5 text-xs">4242 4242 4242 4242</code>,
+        n’importe quelle date future et n’importe quel CVC.
+      </p>
 
-          <label class="mt-4 inline-flex items-center gap-2 text-sm text-neutral-700">
-            <input
-              v-model="setAsDefault"
-              type="checkbox"
-              class="accent-brand-500 h-4 w-4 rounded border-neutral-300"
-            />
-            Définir par défaut
-          </label>
-
-          <AppFormError :message="errorMessage" />
-
-          <button
-            type="button"
-            class="mt-4 w-full rounded-md border border-neutral-200 px-4 py-2 text-sm text-neutral-700"
-            @click="showForm = false"
-          >
-            Annuler
-          </button>
-        </div>
+      <div class="mt-6">
+        <AppStripeCardForm
+          v-if="setupClientSecret"
+          :client-secret="setupClientSecret"
+          @success="onCardSuccess"
+          @error="onCardError"
+        />
       </div>
-    </Teleport>
+
+      <label class="mt-4 inline-flex items-center gap-2 text-sm text-neutral-700">
+        <input
+          v-model="setAsDefault"
+          type="checkbox"
+          class="accent-brand-500 h-4 w-4 rounded border-neutral-300"
+        />
+        Définir par défaut
+      </label>
+
+      <AppFormError :message="errorMessage" />
+    </AppModal>
   </section>
 </template>

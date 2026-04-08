@@ -1,20 +1,38 @@
 <script setup lang="ts">
+import { countryName } from '~~/app/data/countries'
+
 definePageMeta({ middleware: 'auth' })
 useHead({ title: 'Mon compte — Althea Systems' })
 
 const { user } = useAuth()
 const auth = useAuthApi()
+const account = useAccountApi()
+const checkoutApi = useCheckoutApi()
 const router = useRouter()
+const toast = useToast()
 
-const sections = [
-  { to: '/account/settings', label: 'Paramètres', description: 'Nom, email, mot de passe.' },
-  { to: '/account/addresses', label: 'Adresses', description: 'Carnet d’adresses de facturation et livraison.' },
-  { to: '/account/payment-methods', label: 'Moyens de paiement', description: 'Cartes enregistrées via Stripe.' },
-  { to: '/account/orders', label: 'Mes commandes', description: 'Historique de vos achats.' },
-]
+const [addressesResult, paymentsResult, ordersResult] = await Promise.all([
+  account.listAddresses().catch(() => []),
+  account.listPaymentMethods().catch(() => []),
+  checkoutApi.listOrders().catch(() => []),
+])
+
+const defaultShipping = computed(
+  () => addressesResult.find((a) => a.type === 'shipping' && a.isDefault) ?? addressesResult.find((a) => a.type === 'shipping')
+)
+const defaultBilling = computed(
+  () => addressesResult.find((a) => a.type === 'billing' && a.isDefault) ?? addressesResult.find((a) => a.type === 'billing')
+)
+const defaultCard = computed(
+  () => paymentsResult.find((p) => p.isDefault) ?? paymentsResult[0] ?? null
+)
+const lastOrder = computed(() => ordersResult[0] ?? null)
+const formatDate = (value: string | null) =>
+  value ? new Date(value).toLocaleDateString('fr-FR') : '—'
 
 async function onLogout() {
   await auth.logout()
+  toast.success('Vous êtes déconnecté.')
   await router.replace('/')
 }
 </script>
@@ -38,13 +56,77 @@ async function onLogout() {
     </header>
 
     <ul class="mt-10 grid grid-cols-1 gap-4 md:grid-cols-2">
-      <li v-for="section in sections" :key="section.to">
+      <li>
         <NuxtLink
-          :to="section.to"
-          class="block rounded-xl border border-neutral-100 bg-white p-6 transition-shadow hover:shadow-md"
+          to="/account/settings"
+          class="block h-full rounded-xl border border-neutral-100 bg-white p-6 transition-shadow hover:shadow-md"
         >
-          <h2 class="font-display text-h3 font-medium text-brand-text">{{ section.label }}</h2>
-          <p class="mt-2 text-sm text-neutral-600">{{ section.description }}</p>
+          <div class="flex items-start justify-between">
+            <h2 class="font-display text-h3 font-medium text-brand-text">Paramètres</h2>
+            <span class="text-brand-500">→</span>
+          </div>
+          <p class="mt-2 text-sm text-neutral-600">{{ user?.email }}</p>
+          <p v-if="user?.phone" class="mt-1 text-sm text-neutral-500">{{ user.phone }}</p>
+          <p v-else class="mt-1 text-caption text-neutral-400">Téléphone non renseigné</p>
+        </NuxtLink>
+      </li>
+
+      <li>
+        <NuxtLink
+          to="/account/addresses"
+          class="block h-full rounded-xl border border-neutral-100 bg-white p-6 transition-shadow hover:shadow-md"
+        >
+          <div class="flex items-start justify-between">
+            <h2 class="font-display text-h3 font-medium text-brand-text">Adresses</h2>
+            <span class="text-brand-500">→</span>
+          </div>
+          <div v-if="defaultShipping" class="mt-2 text-sm text-neutral-600">
+            <p>{{ defaultShipping.fullName }}</p>
+            <p>{{ defaultShipping.street }}</p>
+            <p>{{ defaultShipping.postalCode }} {{ defaultShipping.city }}, {{ countryName(defaultShipping.country) }}</p>
+          </div>
+          <p v-else class="text-caption mt-2 text-neutral-400">
+            Aucune adresse de livraison · cliquez pour en ajouter une
+          </p>
+        </NuxtLink>
+      </li>
+
+      <li>
+        <NuxtLink
+          to="/account/payment-methods"
+          class="block h-full rounded-xl border border-neutral-100 bg-white p-6 transition-shadow hover:shadow-md"
+        >
+          <div class="flex items-start justify-between">
+            <h2 class="font-display text-h3 font-medium text-brand-text">Moyens de paiement</h2>
+            <span class="text-brand-500">→</span>
+          </div>
+          <p v-if="defaultCard" class="mt-2 text-sm text-neutral-600 capitalize">
+            {{ defaultCard.brand }} •••• {{ defaultCard.lastFour }}
+            <span v-if="defaultCard.expMonth && defaultCard.expYear" class="text-neutral-400">
+              · {{ String(defaultCard.expMonth).padStart(2, '0') }}/{{ defaultCard.expYear }}
+            </span>
+          </p>
+          <p v-else class="text-caption mt-2 text-neutral-400">
+            Aucune carte enregistrée · cliquez pour en ajouter une
+          </p>
+        </NuxtLink>
+      </li>
+
+      <li>
+        <NuxtLink
+          to="/account/orders"
+          class="block h-full rounded-xl border border-neutral-100 bg-white p-6 transition-shadow hover:shadow-md"
+        >
+          <div class="flex items-start justify-between">
+            <h2 class="font-display text-h3 font-medium text-brand-text">Mes commandes</h2>
+            <span class="text-brand-500">→</span>
+          </div>
+          <p class="mt-2 text-sm text-neutral-600">
+            {{ ordersResult.length }} commande{{ ordersResult.length > 1 ? 's' : '' }} passée{{ ordersResult.length > 1 ? 's' : '' }}
+          </p>
+          <p v-if="lastOrder" class="text-caption mt-1 text-neutral-500">
+            Dernière : {{ formatDate(lastOrder.placedAt ?? lastOrder.createdAt) }}
+          </p>
         </NuxtLink>
       </li>
     </ul>
