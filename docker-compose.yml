@@ -36,6 +36,8 @@ services:
       DB_USER: althea
       DB_PASSWORD: althea_secret
       DB_DATABASE: althea_dev
+      MONGO_URI: mongodb://mongo:27017
+      MONGO_DATABASE: althea_images
       HOST: 0.0.0.0
       PORT: 3333
 
