@@ -21,6 +21,7 @@ const AdminHomepageController = () => import('#controllers/admin_homepage_contro
 const AdminUsersController = () => import('#controllers/admin_users_controller')
 const AdminOrdersController = () => import('#controllers/admin_orders_controller')
 const AdminInvoicesController = () => import('#controllers/admin_invoices_controller')
+const AdminMessagesController = () => import('#controllers/admin_messages_controller')
 
 router.get('/', async () => ({ hello: 'world' }))
 
@@ -134,6 +135,12 @@ router
     router.get('credit-notes', [AdminInvoicesController, 'indexCreditNotes'])
     router.get('credit-notes/:id/download', [AdminInvoicesController, 'downloadCreditNote'])
     router.post('credit-notes/:id/resend', [AdminInvoicesController, 'resendCreditNote'])
+    router.get('messages', [AdminMessagesController, 'indexContact'])
+    router.get('messages/:id', [AdminMessagesController, 'showContact'])
+    router.patch('messages/:id/read', [AdminMessagesController, 'markContactRead'])
+    router.get('chatbot/sessions', [AdminMessagesController, 'indexChat'])
+    router.get('chatbot/sessions/:id', [AdminMessagesController, 'showChat'])
+    router.post('chatbot/sessions/:id/reply', [AdminMessagesController, 'replyChat'])
   })
   .prefix('/admin')
   .use([middleware.auth(), middleware.admin()])
