@@ -126,6 +126,7 @@ router.get('/images/:id', [ProductImagesController, 'show'])
 
 router
   .group(() => {
+    router.get('/', [ProductsController, 'adminIndex'])
     router.post('/', [ProductsController, 'store'])
     router.patch(':id', [ProductsController, 'update'])
     router.delete(':id', [ProductsController, 'destroy'])

@@ -15,6 +15,11 @@ export default class ProductsController {
     return listProducts(query)
   }
 
+  async adminIndex({ request }: HttpContext) {
+    const query = await listProductsValidator.validate(request.qs())
+    return listProducts({ ...query, status: query.status ?? 'all' })
+  }
+
   async show({ params }: HttpContext) {
     return Product.query().where('slug', params.slug).preload('category').firstOrFail()
   }
