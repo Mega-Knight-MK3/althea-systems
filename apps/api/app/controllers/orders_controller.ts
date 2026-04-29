@@ -18,6 +18,8 @@ export default class OrdersController {
       .where('userId', user.id)
       .preload('items')
       .preload('invoice')
+      .preload('billingAddress')
+      .preload('paymentMethod')
       .orderBy('createdAt', 'desc')
   }
 
