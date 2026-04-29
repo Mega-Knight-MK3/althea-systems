@@ -1,8 +1,9 @@
 import Product from '#models/product'
 import type { ModelQueryBuilderContract } from '@adonisjs/lucid/types/model'
 
-export type SortKey = 'priority' | 'price' | 'date' | 'stock' | 'relevance'
+export type SortKey = 'priority' | 'price' | 'date' | 'stock' | 'relevance' | 'name'
 export type SortOrder = 'asc' | 'desc'
+export type StatusFilter = 'active' | 'inactive' | 'all'
 
 export interface ProductListQuery {
   q?: string
@@ -14,6 +15,8 @@ export interface ProductListQuery {
   order?: SortOrder
   page?: number
   perPage?: number
+  status?: StatusFilter
+  includeInactive?: boolean
 }
 
 const DEFAULT_PAGE = 1
@@ -43,7 +46,9 @@ function applyFilters(
   builder: ModelQueryBuilderContract<typeof Product>,
   query: ProductListQuery
 ) {
-  builder.where('isActive', true)
+  if (query.status === 'active') builder.where('isActive', true)
+  else if (query.status === 'inactive') builder.where('isActive', false)
+  else if (query.status !== 'all' && !query.includeInactive) builder.where('isActive', true)
 
   if (query.q) applyFuzzyTextFilter(builder, query.q)
   if (query.categoryId) builder.where('categoryId', query.categoryId)
@@ -92,6 +97,9 @@ function applySort(
       return
     case 'stock':
       builder.orderBy('stock', order)
+      return
+    case 'name':
+      builder.orderBy('name', order)
       return
     case 'priority':
     default:
