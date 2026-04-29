@@ -19,6 +19,11 @@ export default class Product extends BaseModel {
   @column()
   declare price: number
 
+  @column({
+    consume: (value: string | number | null) => (value === null ? 0 : Number(value)),
+  })
+  declare vatRate: number
+
   @column()
   declare stock: number
 
