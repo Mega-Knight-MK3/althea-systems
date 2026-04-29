@@ -57,7 +57,7 @@ function extractMessage(err: unknown, fallback: string) {
       <UButton to="/orders" icon="i-lucide-arrow-left" variant="ghost" color="neutral" label="Retour" />
     </template>
   </UDashboardNavbar>
-  <UDashboardPanelContent v-if="data" class="p-4 sm:p-6">
+  <div v-if="data" class="flex flex-col gap-4 sm:gap-6 flex-1 overflow-y-auto p-4 sm:p-6">
     <div class="grid gap-6 lg:grid-cols-3">
       <UCard class="lg:col-span-2">
         <template #header>
@@ -191,5 +191,5 @@ function extractMessage(err: unknown, fallback: string) {
         <p v-else class="text-sm text-muted">Aucun changement de statut enregistré pour l'instant.</p>
       </UCard>
     </div>
-  </UDashboardPanelContent>
+  </div>
 </template>

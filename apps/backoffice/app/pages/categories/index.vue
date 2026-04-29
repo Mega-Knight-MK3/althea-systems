@@ -96,7 +96,7 @@ async function bulkSetStatus(isActive: boolean) {
       <UButton to="/categories/new" icon="i-lucide-plus" label="Nouvelle catégorie" />
     </template>
   </UDashboardNavbar>
-  <UDashboardPanelContent class="p-4 sm:p-6">
+  <div class="flex flex-col gap-4 sm:gap-6 flex-1 overflow-y-auto p-4 sm:p-6">
     <UCard>
       <template #header>
         <div class="flex items-center justify-between gap-3">
@@ -187,5 +187,5 @@ async function bulkSetStatus(isActive: boolean) {
         </table>
       </div>
     </UCard>
-  </UDashboardPanelContent>
+  </div>
 </template>

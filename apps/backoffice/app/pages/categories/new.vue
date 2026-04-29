@@ -13,9 +13,9 @@ const { data: parents } = await useAsyncData<AdminCategory[]>('admin-categories-
       <UButton to="/categories" icon="i-lucide-arrow-left" variant="ghost" color="neutral" label="Retour" />
     </template>
   </UDashboardNavbar>
-  <UDashboardPanelContent class="p-4 sm:p-6">
+  <div class="flex flex-col gap-4 sm:gap-6 flex-1 overflow-y-auto p-4 sm:p-6">
     <UCard>
       <CategoryForm :parents="parents ?? []" />
     </UCard>
-  </UDashboardPanelContent>
+  </div>
 </template>

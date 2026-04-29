@@ -52,7 +52,7 @@ const statusBadge: Record<string, { color: 'success' | 'warning' | 'error', labe
 
 <template>
   <UDashboardNavbar title="Utilisateurs" />
-  <UDashboardPanelContent class="p-4 sm:p-6">
+  <div class="flex flex-col gap-4 sm:gap-6 flex-1 overflow-y-auto p-4 sm:p-6">
     <UCard>
       <template #header>
         <div class="flex flex-wrap items-center gap-3">
@@ -116,5 +116,5 @@ const statusBadge: Record<string, { color: 'success' | 'warning' | 'error', labe
         </div>
       </template>
     </UCard>
-  </UDashboardPanelContent>
+  </div>
 </template>

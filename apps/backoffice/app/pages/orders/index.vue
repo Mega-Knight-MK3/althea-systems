@@ -42,7 +42,7 @@ const statusItems = computed(() => [
 
 <template>
   <UDashboardNavbar title="Commandes" />
-  <UDashboardPanelContent class="p-4 sm:p-6">
+  <div class="flex flex-col gap-4 sm:gap-6 flex-1 overflow-y-auto p-4 sm:p-6">
     <UCard>
       <template #header>
         <div class="flex flex-wrap items-center gap-3">
@@ -104,5 +104,5 @@ const statusItems = computed(() => [
         </div>
       </template>
     </UCard>
-  </UDashboardPanelContent>
+  </div>
 </template>
