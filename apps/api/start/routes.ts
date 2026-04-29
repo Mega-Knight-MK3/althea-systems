@@ -18,6 +18,7 @@ const SiteConfigController = () => import('#controllers/site_config_controller')
 const AdminHomepageController = () => import('#controllers/admin_homepage_controller')
 const AdminUsersController = () => import('#controllers/admin_users_controller')
 const AdminOrdersController = () => import('#controllers/admin_orders_controller')
+const AdminInvoicesController = () => import('#controllers/admin_invoices_controller')
 
 router.get('/', async () => ({ hello: 'world' }))
 
@@ -110,6 +111,19 @@ router
     router.patch(':id/status', [AdminOrdersController, 'updateStatus'])
   })
   .prefix('/admin/orders')
+  .use([middleware.auth(), middleware.admin()])
+
+router
+  .group(() => {
+    router.get('invoices', [AdminInvoicesController, 'indexInvoices'])
+    router.get('invoices/:id/download', [AdminInvoicesController, 'downloadInvoice'])
+    router.post('invoices/:id/resend', [AdminInvoicesController, 'resendInvoice'])
+    router.post('credit-notes', [AdminInvoicesController, 'createCreditNote'])
+    router.get('credit-notes', [AdminInvoicesController, 'indexCreditNotes'])
+    router.get('credit-notes/:id/download', [AdminInvoicesController, 'downloadCreditNote'])
+    router.post('credit-notes/:id/resend', [AdminInvoicesController, 'resendCreditNote'])
+  })
+  .prefix('/admin')
   .use([middleware.auth(), middleware.admin()])
 
 router
