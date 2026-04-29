@@ -51,14 +51,56 @@ export interface AdminAddress {
   isDefault: boolean
 }
 
+export type OrderStatus =
+  | 'pending'
+  | 'paid'
+  | 'processing'
+  | 'shipped'
+  | 'delivered'
+  | 'cancelled'
+  | 'refunded'
+
 export interface AdminOrder {
   id: number
   userId: number
-  status: string
+  status: OrderStatus
   subtotal: string | number
   tax: string | number
+  shippingCost?: string | number
   total: string | number
+  stripePaymentIntentId?: string | null
   createdAt: string
+  customer?: string
+  customerEmail?: string | null
+  paymentMethod?: { brand?: string | null, lastFour?: string | null } | null
+  invoice?: { id: number, invoiceNumber: string, pdfPath?: string | null } | null
+}
+
+export interface AdminOrderItem {
+  id: number
+  productName: string
+  quantity: number
+  unitPrice: string | number
+  total: string | number
+}
+
+export interface AdminOrderStatusHistoryEntry {
+  id: number
+  fromStatus: string | null
+  toStatus: string
+  note: string | null
+  createdAt: string
+  changedBy?: { id: number, fullName: string | null, email: string } | null
+}
+
+export interface AdminOrderDetail {
+  order: AdminOrder & {
+    items: AdminOrderItem[]
+    billingAddress: AdminAddress | null
+    shippingAddress: AdminAddress | null
+    user: AdminUser | null
+  }
+  history: AdminOrderStatusHistoryEntry[]
 }
 
 export interface AdminUserDetail {
