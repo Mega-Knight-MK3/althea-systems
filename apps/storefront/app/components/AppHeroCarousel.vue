@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { HomepageConfig } from '~~/app/types/catalog'
 
+const { t } = useI18n()
 const props = defineProps<{ slides: HomepageConfig['carousel']['slides'] }>()
 
 const activeIndex = ref(0)
@@ -85,7 +86,7 @@ onBeforeUnmount(stop)
                 class="h-full w-full rounded-2xl object-cover"
               />
               <span v-else class="font-display text-brand-500 text-sm tracking-widest uppercase">
-                Visuel à venir
+                {{ t('home.carousel_image_pending') }}
               </span>
             </div>
           </article>
@@ -104,7 +105,7 @@ onBeforeUnmount(stop)
             ? 'w-8 bg-brand-500'
             : 'w-2 bg-brand-500/30 hover:bg-brand-500/60'
         "
-        :aria-label="`Aller à la diapositive ${index + 1}`"
+        :aria-label="t('home.carousel_go_to', { n: index + 1 })"
         @click="goTo(index)"
       />
     </div>
@@ -112,7 +113,7 @@ onBeforeUnmount(stop)
     <button
       type="button"
       class="absolute top-1/2 left-4 hidden -translate-y-1/2 rounded-full bg-white p-2 text-neutral-700 shadow transition-colors hover:text-brand-500 md:block"
-      aria-label="Précédent"
+      :aria-label="t('home.carousel_previous')"
       @click="previous"
     >
       <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -123,7 +124,7 @@ onBeforeUnmount(stop)
     <button
       type="button"
       class="absolute top-1/2 right-4 hidden -translate-y-1/2 rounded-full bg-white p-2 text-neutral-700 shadow transition-colors hover:text-brand-500 md:block"
-      aria-label="Suivant"
+      :aria-label="t('home.carousel_next')"
       @click="next"
     >
       <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">

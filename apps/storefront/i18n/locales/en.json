@@ -19,7 +19,25 @@
   "home": {
     "stat_expertise": "years of expertise",
     "stat_cabinets": "practices equipped",
-    "stat_sav": "SAV response time"
+    "stat_sav": "SAV response time",
+    "categories_title": "Our categories",
+    "categories_view_all": "View all",
+    "categories_empty": "Categories coming soon.",
+    "featured_title": "Top picks right now",
+    "featured_empty": "Our selection will be available soon.",
+    "carousel_image_pending": "Visual coming soon",
+    "carousel_previous": "Previous",
+    "carousel_next": "Next",
+    "carousel_go_to": "Go to slide {n}"
+  },
+  "products": {
+    "in_stock": "In stock",
+    "low_stock": "Low stock",
+    "out_of_stock": "Out of stock"
+  },
+  "search": {
+    "placeholder": "Search for a product or category",
+    "submit": "Run search"
   },
   "contact": {
     "eyebrow": "Contact us",
@@ -82,13 +100,25 @@
     "title": "My cart",
     "empty": "Your cart is empty.",
     "browse": "Browse the catalog",
+    "continue_shopping": "Continue shopping",
     "subtotal": "Subtotal",
     "shipping": "Shipping",
     "tax": "VAT",
     "total": "Total",
     "checkout": "Proceed to checkout",
     "remove": "Remove",
-    "quantity": "Quantity"
+    "remove_all": "Remove all",
+    "quantity": "Quantity",
+    "decrease": "Decrease quantity",
+    "increase": "Increase quantity",
+    "summary": "Summary",
+    "unavailable": "Unavailable",
+    "unavailable_warning": "Some products are no longer available. Remove them to complete your order.",
+    "unavailable_removed": "Unavailable products removed from cart.",
+    "removed": "{name} removed from cart.",
+    "unit_price": "{price} each",
+    "must_login": "You'll need to sign in to place the order.",
+    "browse_empty_lead": "Browse the catalog and add products to find them here."
   },
   "chatbot": {
     "open": "Contact us",

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const router = useRouter()
+const { t } = useI18n()
 const query = ref('')
 
 function onSubmit() {
@@ -19,14 +20,14 @@ function onSubmit() {
       v-model="query"
       type="search"
       name="q"
-      placeholder="Rechercher un produit, une catégorie"
+      :placeholder="t('search.placeholder')"
       class="w-full bg-transparent text-base text-neutral-800 placeholder:text-neutral-600 focus:outline-none"
-      aria-label="Rechercher un produit ou une catégorie"
+      :aria-label="t('search.placeholder')"
     />
     <button
       type="submit"
       class="text-neutral-600 transition-colors hover:text-brand-500"
-      aria-label="Lancer la recherche"
+      :aria-label="t('search.submit')"
     >
       <svg
         viewBox="0 0 24 24"

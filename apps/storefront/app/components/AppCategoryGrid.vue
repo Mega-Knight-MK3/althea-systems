@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Category } from '~~/app/types/catalog'
 
+const { t } = useI18n()
 defineProps<{ categories: Category[] }>()
 </script>
 
@@ -8,9 +9,9 @@ defineProps<{ categories: Category[] }>()
   <section class="bg-neutral-50 py-12 md:py-16">
     <div class="mx-auto w-full max-w-[1440px] px-4 md:px-10">
       <header class="flex items-end justify-between">
-        <h2 class="font-display text-h2 font-medium text-brand-text">Nos catégories</h2>
+        <h2 class="font-display text-h2 font-medium text-brand-text">{{ t('home.categories_title') }}</h2>
         <NuxtLink to="/categories" class="text-sm text-brand-500 hover:text-brand-700">
-          Tout voir
+          {{ t('home.categories_view_all') }}
         </NuxtLink>
       </header>
 
@@ -44,7 +45,7 @@ defineProps<{ categories: Category[] }>()
         </li>
       </ul>
 
-      <p v-else class="mt-8 text-sm text-neutral-500">Catégories à venir.</p>
+      <p v-else class="mt-8 text-sm text-neutral-500">{{ t('home.categories_empty') }}</p>
     </div>
   </section>
 </template>

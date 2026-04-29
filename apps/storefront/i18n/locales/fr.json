@@ -19,7 +19,25 @@
   "home": {
     "stat_expertise": "ans d'expertise",
     "stat_cabinets": "cabinets équipés",
-    "stat_sav": "vitesse de réponse SAV"
+    "stat_sav": "vitesse de réponse SAV",
+    "categories_title": "Nos catégories",
+    "categories_view_all": "Tout voir",
+    "categories_empty": "Catégories à venir.",
+    "featured_title": "Top produits du moment",
+    "featured_empty": "Notre sélection sera disponible prochainement.",
+    "carousel_image_pending": "Visuel à venir",
+    "carousel_previous": "Précédent",
+    "carousel_next": "Suivant",
+    "carousel_go_to": "Aller à la diapositive {n}"
+  },
+  "products": {
+    "in_stock": "En stock",
+    "low_stock": "Stock faible",
+    "out_of_stock": "En rupture de stock"
+  },
+  "search": {
+    "placeholder": "Rechercher un produit, une catégorie",
+    "submit": "Lancer la recherche"
   },
   "contact": {
     "eyebrow": "Nous contacter",
@@ -82,13 +100,25 @@
     "title": "Mon panier",
     "empty": "Votre panier est vide.",
     "browse": "Découvrir le catalogue",
+    "continue_shopping": "Continuer mes achats",
     "subtotal": "Sous-total",
     "shipping": "Livraison",
     "tax": "TVA",
     "total": "Total",
     "checkout": "Passer à la caisse",
     "remove": "Retirer",
-    "quantity": "Quantité"
+    "remove_all": "Retirer tout",
+    "quantity": "Quantité",
+    "decrease": "Diminuer la quantité",
+    "increase": "Augmenter la quantité",
+    "summary": "Récapitulatif",
+    "unavailable": "Indisponible",
+    "unavailable_warning": "Certains produits ne sont plus disponibles. Retirez-les pour finaliser votre commande.",
+    "unavailable_removed": "Produits indisponibles retirés du panier.",
+    "removed": "{name} retiré du panier.",
+    "unit_price": "{price} l'unité",
+    "must_login": "Vous devrez vous connecter pour finaliser la commande.",
+    "browse_empty_lead": "Parcourez le catalogue et ajoutez vos produits pour les retrouver ici."
   },
   "chatbot": {
     "open": "Contactez-nous",
