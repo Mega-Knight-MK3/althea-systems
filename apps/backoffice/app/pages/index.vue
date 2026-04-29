@@ -76,7 +76,7 @@ const statusColor: Record<string, 'primary' | 'success' | 'warning' | 'error' | 
     </template>
   </UDashboardNavbar>
 
-  <UDashboardPanelContent class="p-4 sm:p-6">
+  <div class="flex flex-col gap-4 sm:gap-6 flex-1 overflow-y-auto p-4 sm:p-6">
     <div class="space-y-6">
       <header>
         <p class="text-sm text-muted">Bienvenue</p>
@@ -162,5 +162,5 @@ const statusColor: Record<string, 'primary' | 'success' | 'warning' | 'error' | 
         </UCard>
       </section>
     </div>
-  </UDashboardPanelContent>
+  </div>
 </template>

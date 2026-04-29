@@ -123,7 +123,7 @@ function extractMessage(err: unknown, fallback: string) {
 
 <template>
   <UDashboardNavbar title="Carrousel d'accueil" />
-  <UDashboardPanelContent class="p-4 sm:p-6">
+  <div class="flex flex-col gap-4 sm:gap-6 flex-1 overflow-y-auto p-4 sm:p-6">
     <div class="space-y-6 max-w-4xl">
       <UCard>
         <template #header>
@@ -215,5 +215,5 @@ function extractMessage(err: unknown, fallback: string) {
         </template>
       </UCard>
     </div>
-  </UDashboardPanelContent>
+  </div>
 </template>

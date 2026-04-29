@@ -108,7 +108,7 @@ function extractMessage(err: unknown, fallback: string) {
 
 <template>
   <UDashboardNavbar title="Factures & avoirs" />
-  <UDashboardPanelContent class="p-4 sm:p-6">
+  <div class="flex flex-col gap-4 sm:gap-6 flex-1 overflow-y-auto p-4 sm:p-6">
     <UCard>
       <template #header>
         <UTabs
@@ -232,5 +232,5 @@ function extractMessage(err: unknown, fallback: string) {
         </UCard>
       </template>
     </UModal>
-  </UDashboardPanelContent>
+  </div>
 </template>

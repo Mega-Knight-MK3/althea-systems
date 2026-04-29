@@ -76,7 +76,7 @@ function extractMessage(err: unknown, fallback: string) {
 
 <template>
   <UDashboardNavbar title="Sécurité" />
-  <UDashboardPanelContent class="p-4 sm:p-6">
+  <div class="flex flex-col gap-4 sm:gap-6 flex-1 overflow-y-auto p-4 sm:p-6">
     <div class="grid gap-6 max-w-3xl">
       <UCard>
         <template #header>
@@ -142,5 +142,5 @@ function extractMessage(err: unknown, fallback: string) {
         </ul>
       </UCard>
     </div>
-  </UDashboardPanelContent>
+  </div>
 </template>
