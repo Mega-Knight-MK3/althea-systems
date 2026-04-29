@@ -76,7 +76,7 @@ function extractMessage(err: unknown, fallback: string) {
 
 <template>
   <UDashboardNavbar title="Sécurité" />
-  <UDashboardPanelContent>
+  <UDashboardPanelContent class="p-4 sm:p-6">
     <div class="grid gap-6 max-w-3xl">
       <UCard>
         <template #header>
