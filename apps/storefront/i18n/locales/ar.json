@@ -19,7 +19,25 @@
   "home": {
     "stat_expertise": "سنوات من الخبرة",
     "stat_cabinets": "عيادة مجهزة",
-    "stat_sav": "زمن الاستجابة للدعم"
+    "stat_sav": "زمن الاستجابة للدعم",
+    "categories_title": "فئاتنا",
+    "categories_view_all": "عرض الكل",
+    "categories_empty": "الفئات قريبًا.",
+    "featured_title": "أبرز المنتجات حاليًا",
+    "featured_empty": "ستتوفر تشكيلتنا قريبًا.",
+    "carousel_image_pending": "الصورة قريبًا",
+    "carousel_previous": "السابق",
+    "carousel_next": "التالي",
+    "carousel_go_to": "الانتقال إلى الشريحة {n}"
+  },
+  "products": {
+    "in_stock": "متوفر",
+    "low_stock": "المخزون منخفض",
+    "out_of_stock": "غير متوفر"
+  },
+  "search": {
+    "placeholder": "ابحث عن منتج أو فئة",
+    "submit": "بدء البحث"
   },
   "contact": {
     "eyebrow": "اتصل بنا",

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { t } = useI18n()
+const { t, locale } = useI18n()
 useHead(() => ({ title: `${t('cart.title')} — Althea Systems` }))
 
 const cart = useCart()
@@ -38,16 +38,16 @@ function removeUnavailable() {
   for (const line of quote.value?.unavailable ?? []) {
     cart.remove(line.productId)
   }
-  toast.info('Produits indisponibles retirés du panier.')
+  toast.info(t('cart.unavailable_removed'))
 }
 
 function onRemove(productId: number, name: string) {
   cart.remove(productId)
-  toast.info(`${name} retiré du panier.`)
+  toast.info(t('cart.removed', { name }))
 }
 
 const formatPrice = (value: number) =>
-  new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(value)
+  new Intl.NumberFormat(locale.value, { style: 'currency', currency: 'EUR' }).format(value)
 
 const hasUnavailable = computed(() => (quote.value?.unavailable.length ?? 0) > 0)
 const canCheckout = computed(
@@ -60,7 +60,7 @@ const canCheckout = computed(
     <div class="flex flex-wrap items-end justify-between gap-3">
       <h1 class="font-display text-h1 font-medium text-brand-text">{{ t('cart.title') }}</h1>
       <NuxtLink to="/" class="text-sm text-neutral-500 hover:text-brand-500">
-        ← Continuer mes achats
+        ← {{ t('cart.continue_shopping') }}
       </NuxtLink>
     </div>
 
@@ -75,7 +75,7 @@ const canCheckout = computed(
       </svg>
       <h2 class="font-display text-h3 font-medium text-brand-text">{{ t('cart.empty') }}</h2>
       <p class="mt-2 max-w-sm text-sm text-neutral-600">
-        Parcourez le catalogue et ajoutez vos produits pour les retrouver ici.
+        {{ t('cart.browse_empty_lead') }}
       </p>
       <NuxtLink
         to="/"
@@ -91,15 +91,13 @@ const canCheckout = computed(
           v-if="hasUnavailable"
           class="bg-warning/10 text-warning flex items-start justify-between gap-4 rounded-md border border-warning/20 px-4 py-3 text-sm"
         >
-          <span>
-            Certains produits ne sont plus disponibles. Retirez-les pour finaliser votre commande.
-          </span>
+          <span>{{ t('cart.unavailable_warning') }}</span>
           <button
             type="button"
             class="rounded-md border border-warning/40 px-3 py-1 text-xs font-medium hover:bg-warning/20"
             @click="removeUnavailable"
           >
-            Retirer tout
+            {{ t('cart.remove_all') }}
           </button>
         </div>
 
@@ -123,10 +121,10 @@ const canCheckout = computed(
                     v-if="lineFor(item.productId) && !lineFor(item.productId)?.available"
                     class="text-danger mt-1 text-caption"
                   >
-                    Indisponible
+                    {{ t('cart.unavailable') }}
                   </p>
                   <p v-else class="text-caption mt-1 text-neutral-500">
-                    {{ formatPrice(item.unitPrice) }} l’unité
+                    {{ t('cart.unit_price', { price: formatPrice(item.unitPrice) }) }}
                   </p>
                 </div>
                 <button
@@ -142,7 +140,7 @@ const canCheckout = computed(
                   <button
                     type="button"
                     class="px-4 py-2 text-base text-neutral-600 transition-colors hover:text-brand-500"
-                    aria-label="Diminuer la quantité"
+                    :aria-label="t('cart.decrease')"
                     @click="cart.setQuantity(item.productId, item.quantity - 1)"
                   >
                     −
@@ -151,7 +149,7 @@ const canCheckout = computed(
                   <button
                     type="button"
                     class="px-4 py-2 text-base text-neutral-600 transition-colors hover:text-brand-500"
-                    aria-label="Augmenter la quantité"
+                    :aria-label="t('cart.increase')"
                     @click="cart.setQuantity(item.productId, item.quantity + 1)"
                   >
                     +
@@ -170,7 +168,7 @@ const canCheckout = computed(
       <aside
         class="rounded-xl border border-neutral-100 bg-white p-6 lg:sticky lg:top-24 lg:self-start"
       >
-        <h2 class="font-display text-h3 font-medium text-brand-text">Récapitulatif</h2>
+        <h2 class="font-display text-h3 font-medium text-brand-text">{{ t('cart.summary') }}</h2>
         <dl class="mt-6 space-y-3 text-sm text-neutral-700">
           <div class="flex justify-between">
             <dt>{{ t('cart.subtotal') }}</dt>
@@ -207,7 +205,7 @@ const canCheckout = computed(
         </button>
 
         <p v-if="!isAuthenticated" class="text-caption mt-3 text-neutral-500">
-          Vous devrez vous connecter pour finaliser la commande.
+          {{ t('cart.must_login') }}
         </p>
       </aside>
     </div>

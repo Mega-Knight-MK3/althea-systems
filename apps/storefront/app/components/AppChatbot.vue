@@ -24,6 +24,7 @@ const SESSION_KEY = 'althea_chatbot_session'
 
 const api = useApi()
 const { user } = useAuth()
+const { t } = useI18n()
 
 const open = ref(false)
 const initialising = ref(false)
@@ -301,7 +302,7 @@ function quickAsk(intent: string) {
       <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M21 11a8.5 8.5 0 0 1-12.5 7.5L3 21l1.6-4.5A8.5 8.5 0 1 1 21 11Z" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <span class="hidden sm:inline">{{ open ? 'Réduire' : 'Contactez-nous' }}</span>
+      <span class="hidden sm:inline">{{ open ? t('chatbot.minimize') : t('chatbot.open') }}</span>
     </button>
   </div>
 </template>

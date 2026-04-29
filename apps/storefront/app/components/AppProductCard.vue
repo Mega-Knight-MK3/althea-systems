@@ -2,12 +2,13 @@
 import type { Product } from '~~/app/types/catalog'
 
 const props = defineProps<{ product: Product; layout?: 'grid' | 'list' }>()
+const { t, locale } = useI18n()
 
 const layout = computed(() => props.layout ?? 'grid')
 const inStock = computed(() => props.product.stock > 0)
 const isLowStock = computed(() => props.product.stock > 0 && props.product.stock <= 5)
 const formattedPrice = computed(() =>
-  new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(props.product.price)
+  new Intl.NumberFormat(locale.value, { style: 'currency', currency: 'EUR' }).format(props.product.price)
 )
 </script>
 
@@ -36,12 +37,12 @@ const formattedPrice = computed(() =>
 
       <p class="mt-2 text-caption">
         <span v-if="!inStock" class="rounded-full bg-danger/10 px-2 py-0.5 text-danger">
-          En rupture de stock
+          {{ t('products.out_of_stock') }}
         </span>
         <span v-else-if="isLowStock" class="rounded-full bg-warning/10 px-2 py-0.5 text-warning">
-          Stock faible
+          {{ t('products.low_stock') }}
         </span>
-        <span v-else class="rounded-full bg-success/10 px-2 py-0.5 text-success">En stock</span>
+        <span v-else class="rounded-full bg-success/10 px-2 py-0.5 text-success">{{ t('products.in_stock') }}</span>
       </p>
     </div>
   </NuxtLink>
