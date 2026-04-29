@@ -15,6 +15,7 @@ export default class AdminHomepageController {
     return {
       slides,
       introBody: intro?.value ?? '',
+      introTranslations: intro?.translations ?? {},
     }
   }
 
@@ -35,6 +36,7 @@ export default class AdminHomepageController {
             imageUrl: slide.imageUrl ?? null,
             position: i,
             isActive: slide.isActive ?? true,
+            translations: slide.translations ?? {},
           },
           { client: trx }
         )
@@ -46,14 +48,19 @@ export default class AdminHomepageController {
   }
 
   async updateIntro({ request }: HttpContext) {
-    const { body } = await request.validateUsing(updateIntroValidator)
+    const { body, translations } = await request.validateUsing(updateIntroValidator)
     const existing = await SiteSetting.find(INTRO_BODY_KEY)
     if (existing) {
       existing.value = body
+      if (translations) existing.translations = translations
       await existing.save()
     } else {
-      await SiteSetting.create({ key: INTRO_BODY_KEY, value: body })
+      await SiteSetting.create({
+        key: INTRO_BODY_KEY,
+        value: body,
+        translations: translations ?? {},
+      })
     }
-    return { introBody: body }
+    return { introBody: body, introTranslations: translations ?? {} }
   }
 }
