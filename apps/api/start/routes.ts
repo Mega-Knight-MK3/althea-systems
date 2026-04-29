@@ -3,6 +3,7 @@ import { middleware } from './kernel.js'
 
 const AuthController = () => import('#controllers/auth_controller')
 const AdminAuthController = () => import('#controllers/admin_auth_controller')
+const AdminDashboardController = () => import('#controllers/admin_dashboard_controller')
 const PasswordResetsController = () => import('#controllers/password_resets_controller')
 const AccountController = () => import('#controllers/account_controller')
 const AddressesController = () => import('#controllers/addresses_controller')
@@ -80,6 +81,13 @@ router
       .use([middleware.auth(), middleware.admin()])
   })
   .prefix('/admin/auth')
+
+router
+  .group(() => {
+    router.get('stats', [AdminDashboardController, 'stats'])
+  })
+  .prefix('/admin/dashboard')
+  .use([middleware.auth(), middleware.admin()])
 
 router
   .group(() => {
