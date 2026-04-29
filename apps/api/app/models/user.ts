@@ -38,6 +38,22 @@ export default class User extends compose(BaseModel, AuthFinder) {
   @column()
   declare stripeCustomerId: string | null
 
+  @column({ serializeAs: null })
+  declare totpSecret: string | null
+
+  @column.dateTime({ serializeAs: null })
+  declare totpEnabledAt: DateTime | null
+
+  @column({
+    serializeAs: null,
+    prepare: (value: string[] | null) => (value ? JSON.stringify(value) : null),
+    consume: (value: string | string[] | null) => {
+      if (!value) return null
+      return Array.isArray(value) ? value : JSON.parse(value)
+    },
+  })
+  declare totpRecoveryCodes: string[] | null
+
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
 
@@ -46,6 +62,10 @@ export default class User extends compose(BaseModel, AuthFinder) {
 
   get isEmailVerified() {
     return this.emailVerifiedAt !== null
+  }
+
+  get isTotpEnabled() {
+    return this.totpEnabledAt !== null && !!this.totpSecret
   }
 
   static accessTokens = DbAccessTokensProvider.forModel(User)

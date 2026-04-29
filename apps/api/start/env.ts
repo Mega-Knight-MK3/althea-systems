@@ -25,4 +25,10 @@ export default await Env.create(new URL('../', import.meta.url), {
   STOREFRONT_URL: Env.schema.string({ format: 'url', tld: false }),
   STRIPE_SECRET_KEY: Env.schema.string.optional(),
   STRIPE_CURRENCY: Env.schema.string.optional(),
+
+  ADMIN_EMAIL: Env.schema.string.optional({ format: 'email' }),
+  ADMIN_PASSWORD: Env.schema.string.optional(),
+  ADMIN_FULL_NAME: Env.schema.string.optional(),
+
+  TOTP_ISSUER: Env.schema.string.optional(),
 })
