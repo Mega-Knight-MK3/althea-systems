@@ -16,6 +16,7 @@ const AdminCategoriesController = () => import('#controllers/admin_categories_co
 const ProductImagesController = () => import('#controllers/product_images_controller')
 const SiteConfigController = () => import('#controllers/site_config_controller')
 const ContactController = () => import('#controllers/contact_controller')
+const ChatbotController = () => import('#controllers/chatbot_controller')
 const AdminHomepageController = () => import('#controllers/admin_homepage_controller')
 const AdminUsersController = () => import('#controllers/admin_users_controller')
 const AdminOrdersController = () => import('#controllers/admin_orders_controller')
@@ -26,6 +27,14 @@ router.get('/', async () => ({ hello: 'world' }))
 router.get('/site-config/homepage', [SiteConfigController, 'homepage'])
 
 router.post('/contact', [ContactController, 'store'])
+
+router
+  .group(() => {
+    router.post('sessions', [ChatbotController, 'start'])
+    router.post('sessions/:id/messages', [ChatbotController, 'postMessage'])
+    router.post('sessions/:id/escalate', [ChatbotController, 'escalate'])
+  })
+  .prefix('/chatbot')
 
 router
   .group(() => {
