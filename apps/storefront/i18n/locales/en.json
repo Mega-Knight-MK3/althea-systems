@@ -6,7 +6,8 @@
     "account": "My account",
     "language": "Change language",
     "open_menu": "Open menu",
-    "close": "Close"
+    "close": "Close",
+    "skip_to_content": "Skip to main content"
   },
   "footer": {
     "rights": "© {year} Althea Systems",
