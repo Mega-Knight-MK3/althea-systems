@@ -15,6 +15,7 @@ const CategoriesController = () => import('#controllers/categories_controller')
 const AdminCategoriesController = () => import('#controllers/admin_categories_controller')
 const ProductImagesController = () => import('#controllers/product_images_controller')
 const SiteConfigController = () => import('#controllers/site_config_controller')
+const AdminHomepageController = () => import('#controllers/admin_homepage_controller')
 
 router.get('/', async () => ({ hello: 'world' }))
 
@@ -89,6 +90,15 @@ router
     router.get('sales', [AdminDashboardController, 'sales'])
   })
   .prefix('/admin/dashboard')
+  .use([middleware.auth(), middleware.admin()])
+
+router
+  .group(() => {
+    router.get('/', [AdminHomepageController, 'show'])
+    router.put('slides', [AdminHomepageController, 'replaceSlides'])
+    router.patch('intro', [AdminHomepageController, 'updateIntro'])
+  })
+  .prefix('/admin/homepage')
   .use([middleware.auth(), middleware.admin()])
 
 router
