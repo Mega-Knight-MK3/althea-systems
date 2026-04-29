@@ -1,5 +1,6 @@
 <script setup lang="ts">
-useHead({ title: 'Panier — Althea Systems' })
+const { t } = useI18n()
+useHead(() => ({ title: `${t('cart.title')} — Althea Systems` }))
 
 const cart = useCart()
 const checkoutApi = useCheckoutApi()
@@ -57,7 +58,7 @@ const canCheckout = computed(
 <template>
   <section class="mx-auto w-full max-w-[1200px] px-4 py-12 md:px-10 md:py-16">
     <div class="flex flex-wrap items-end justify-between gap-3">
-      <h1 class="font-display text-h1 font-medium text-brand-text">Mon panier</h1>
+      <h1 class="font-display text-h1 font-medium text-brand-text">{{ t('cart.title') }}</h1>
       <NuxtLink to="/" class="text-sm text-neutral-500 hover:text-brand-500">
         ← Continuer mes achats
       </NuxtLink>
@@ -72,7 +73,7 @@ const canCheckout = computed(
         <circle cx="10" cy="20" r="1.4" fill="currentColor" />
         <circle cx="18" cy="20" r="1.4" fill="currentColor" />
       </svg>
-      <h2 class="font-display text-h3 font-medium text-brand-text">Votre panier est vide</h2>
+      <h2 class="font-display text-h3 font-medium text-brand-text">{{ t('cart.empty') }}</h2>
       <p class="mt-2 max-w-sm text-sm text-neutral-600">
         Parcourez le catalogue et ajoutez vos produits pour les retrouver ici.
       </p>
@@ -80,7 +81,7 @@ const canCheckout = computed(
         to="/"
         class="bg-brand-500 hover:bg-brand-700 mt-6 inline-flex rounded-md px-5 py-3 text-sm font-medium text-white transition-colors"
       >
-        Découvrir les produits
+        {{ t('cart.browse') }}
       </NuxtLink>
     </div>
 
@@ -133,7 +134,7 @@ const canCheckout = computed(
                   class="text-caption text-neutral-500 transition-colors hover:text-danger"
                   @click="onRemove(item.productId, item.name)"
                 >
-                  Retirer
+                  {{ t('cart.remove') }}
                 </button>
               </div>
               <div class="mt-4 flex items-center justify-between">
@@ -172,19 +173,19 @@ const canCheckout = computed(
         <h2 class="font-display text-h3 font-medium text-brand-text">Récapitulatif</h2>
         <dl class="mt-6 space-y-3 text-sm text-neutral-700">
           <div class="flex justify-between">
-            <dt>Sous-total</dt>
+            <dt>{{ t('cart.subtotal') }}</dt>
             <dd>{{ formatPrice(quote?.subtotal ?? cart.subtotal.value) }}</dd>
           </div>
           <div class="flex justify-between">
-            <dt>Livraison</dt>
+            <dt>{{ t('cart.shipping') }}</dt>
             <dd>{{ formatPrice(quote?.shipping ?? 0) }}</dd>
           </div>
           <div class="flex justify-between">
-            <dt>TVA</dt>
+            <dt>{{ t('cart.tax') }}</dt>
             <dd>{{ formatPrice(quote?.tax ?? 0) }}</dd>
           </div>
           <div class="text-brand-text mt-4 flex justify-between border-t border-neutral-100 pt-4 text-base font-medium">
-            <dt>Total</dt>
+            <dt>{{ t('cart.total') }}</dt>
             <dd>{{ formatPrice(quote?.total ?? cart.subtotal.value) }}</dd>
           </div>
         </dl>
@@ -194,7 +195,7 @@ const canCheckout = computed(
           to="/checkout"
           class="bg-brand-500 hover:bg-brand-700 mt-6 inline-flex w-full items-center justify-center rounded-md px-4 py-3 text-sm font-medium text-white transition-colors"
         >
-          Passer à la caisse
+          {{ t('cart.checkout') }}
         </NuxtLink>
         <button
           v-else
@@ -202,7 +203,7 @@ const canCheckout = computed(
           disabled
           class="mt-6 inline-flex w-full cursor-not-allowed items-center justify-center rounded-md bg-neutral-300 px-4 py-3 text-sm font-medium text-white"
         >
-          Passer à la caisse
+          {{ t('cart.checkout') }}
         </button>
 
         <p v-if="!isAuthenticated" class="text-caption mt-3 text-neutral-500">

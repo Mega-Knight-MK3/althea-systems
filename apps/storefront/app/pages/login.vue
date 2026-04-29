@@ -1,6 +1,7 @@
 <script setup lang="ts">
 definePageMeta({ middleware: 'guest' })
-useHead({ title: 'Connexion — Althea Systems' })
+const { t } = useI18n()
+useHead(() => ({ title: `${t('auth.login_title')} — Althea Systems` }))
 
 const route = useRoute()
 const router = useRouter()
@@ -20,7 +21,7 @@ async function onSubmit() {
     const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/account'
     await router.replace(redirect)
   } catch (err) {
-    errorMessage.value = extractFirstError(err) ?? 'Identifiants invalides.'
+    errorMessage.value = extractFirstError(err) ?? t('auth.errors.invalid_credentials')
   } finally {
     loading.value = false
   }
@@ -29,14 +30,12 @@ async function onSubmit() {
 
 <template>
   <section class="mx-auto w-full max-w-md px-4 py-12 md:py-16">
-    <h1 class="font-display text-h1 font-medium text-brand-text">Connexion</h1>
-    <p class="mt-3 text-sm text-neutral-600">
-      Accédez à votre espace Althea Systems pour gérer vos commandes.
-    </p>
+    <h1 class="font-display text-h1 font-medium text-brand-text">{{ t('auth.login_title') }}</h1>
+    <p class="mt-3 text-sm text-neutral-600">{{ t('auth.login_lead') }}</p>
 
     <form class="mt-8 space-y-5" @submit.prevent="onSubmit">
       <label class="block">
-        <span class="text-caption text-neutral-500 uppercase">Adresse email</span>
+        <span class="text-caption text-neutral-500 uppercase">{{ t('auth.email') }}</span>
         <input
           v-model="email"
           type="email"
@@ -47,7 +46,7 @@ async function onSubmit() {
       </label>
 
       <label class="block">
-        <span class="text-caption text-neutral-500 uppercase">Mot de passe</span>
+        <span class="text-caption text-neutral-500 uppercase">{{ t('auth.password') }}</span>
         <input
           v-model="password"
           type="password"
@@ -64,10 +63,10 @@ async function onSubmit() {
             type="checkbox"
             class="accent-brand-500 h-4 w-4 rounded border-neutral-300"
           />
-          Se souvenir de moi
+          {{ t('auth.remember_me') }}
         </label>
         <NuxtLink to="/forgot-password" class="text-brand-500 hover:text-brand-700">
-          Mot de passe oublié ?
+          {{ t('auth.forgot_link') }}
         </NuxtLink>
       </div>
 
@@ -78,12 +77,12 @@ async function onSubmit() {
         class="bg-brand-500 hover:bg-brand-700 inline-flex w-full items-center justify-center rounded-md px-4 py-3 text-sm font-medium text-white transition-colors disabled:cursor-not-allowed disabled:bg-neutral-300"
         :disabled="loading"
       >
-        {{ loading ? 'Connexion…' : 'Se connecter' }}
+        {{ loading ? t('auth.submitting_login') : t('auth.submit_login') }}
       </button>
 
       <p class="text-center text-sm text-neutral-600">
-        Pas encore de compte ?
-        <NuxtLink to="/register" class="text-brand-500 hover:text-brand-700">Créer un compte</NuxtLink>
+        {{ t('auth.no_account') }}
+        <NuxtLink to="/register" class="text-brand-500 hover:text-brand-700">{{ t('auth.create_account') }}</NuxtLink>
       </p>
     </form>
   </section>

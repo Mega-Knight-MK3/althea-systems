@@ -43,7 +43,7 @@ practices for Althea Systems.
 | **Mass assignment**  | Lucid models populate via explicit `.merge(payload)` from Vine validators; no `request.all()` is forwarded directly. |
 | **Open redirect**    | The login redirect parameter only accepts in-app paths and is validated at the boundary in the backoffice login page. |
 | **Replay (2FA)**     | Challenge tokens have a 5-minute TTL, are encrypted with the app key and have a fixed `purpose`. Recovery codes are removed from the user's set once consumed. |
-| **Brute force**      | Pending — recommend adding `@adonisjs/limiter` to `/auth/login` and `/admin/auth/login` (5 req/min/IP) before production. |
+| **Brute force**      | In-memory rate limiter on `/auth/login` (10 req/min per IP+email), `/admin/auth/login` (5 req/min) and `/admin/auth/verify-2fa` (10 req/min per IP). Production should swap the in-memory store for Redis if running multiple API instances. |
 | **Privilege escalation** | Admin endpoints sit behind `auth + admin` middleware. The user-update validator does not accept role from the storefront flow. |
 | **CORS**             | `apps/api/config/cors.ts`: production must restrict `origin` to the storefront and backoffice hostnames. |
 

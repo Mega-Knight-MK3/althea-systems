@@ -19,6 +19,7 @@ import {
   hashRecoveryCode,
   verifyTotpCode,
 } from '#services/totp_service'
+import { consume as consumeRateLimit } from '#services/rate_limiter'
 
 const ADMIN_TOKEN_NAME = 'backoffice_session'
 const ADMIN_SESSION_EXPIRY = '8 hours'
@@ -28,6 +29,19 @@ const CHALLENGE_EXPIRY = '5 minutes'
 export default class AdminAuthController {
   async login({ request, response }: HttpContext) {
     const { email, password } = await request.validateUsing(adminLoginValidator)
+
+    const limit = consumeRateLimit(`admin-login:${request.ip()}:${email.toLowerCase()}`, {
+      max: 5,
+      windowMs: 60_000,
+    })
+    if (!limit.allowed) {
+      response.header('Retry-After', String(limit.retryAfterSeconds))
+      throw new Exception('Trop de tentatives. Réessayez plus tard.', {
+        code: 'E_TOO_MANY_REQUESTS',
+        status: 429,
+      })
+    }
+
     const user = await User.verifyCredentials(email, password)
 
     ensureActiveAdmin(user)
@@ -44,8 +58,18 @@ export default class AdminAuthController {
     return issueAdminSession(user)
   }
 
-  async verify2fa({ request }: HttpContext) {
+  async verify2fa({ request, response }: HttpContext) {
     const { challengeToken, code } = await request.validateUsing(adminTotpChallengeValidator)
+
+    const limit = consumeRateLimit(`admin-2fa:${request.ip()}`, { max: 10, windowMs: 60_000 })
+    if (!limit.allowed) {
+      response.header('Retry-After', String(limit.retryAfterSeconds))
+      throw new Exception('Trop de tentatives. Réessayez plus tard.', {
+        code: 'E_TOO_MANY_REQUESTS',
+        status: 429,
+      })
+    }
+
     const payload = encryption.decrypt<{ userId: number }>(challengeToken, CHALLENGE_PURPOSE)
     if (!payload) throw new Exception('Challenge expiré.', { status: 401 })
 

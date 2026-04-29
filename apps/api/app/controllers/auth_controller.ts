@@ -10,6 +10,7 @@ import {
 } from '#validators/auth'
 import { createToken, hashToken } from '#services/token_factory'
 import { sendEmailVerification } from '#services/account_mailer'
+import { consume } from '#services/rate_limiter'
 
 const SHORT_TOKEN_EXPIRY = '12 hours'
 const LONG_TOKEN_EXPIRY = '30 days'
@@ -24,8 +25,21 @@ export default class AuthController {
     return response.created({ user })
   }
 
-  async login({ request }: HttpContext) {
+  async login({ request, response }: HttpContext) {
     const { email, password, rememberMe } = await request.validateUsing(loginValidator)
+
+    const limit = consume(`login:${request.ip()}:${email.toLowerCase()}`, {
+      max: 10,
+      windowMs: 60_000,
+    })
+    if (!limit.allowed) {
+      response.header('Retry-After', String(limit.retryAfterSeconds))
+      throw new Exception('Trop de tentatives. Réessayez plus tard.', {
+        code: 'E_TOO_MANY_REQUESTS',
+        status: 429,
+      })
+    }
+
     const user = await User.verifyCredentials(email, password)
 
     if (!user.isActive) {
