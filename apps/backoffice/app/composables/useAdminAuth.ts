@@ -1,4 +1,4 @@
-export interface AdminUser {
+export interface AdminAuthUser {
   id: number
   email: string
   fullName: string | null
@@ -14,7 +14,7 @@ export interface AdminToken {
 }
 
 interface AdminAuthState {
-  user: AdminUser | null
+  user: AdminAuthUser | null
   token: AdminToken | null
   twoFactorEnabled: boolean
 }
@@ -29,7 +29,7 @@ export function useAdminAuth() {
     sameSite: 'lax',
     secure: false
   })
-  const userCookie = useCookie<AdminUser | null>(USER_COOKIE, {
+  const userCookie = useCookie<AdminAuthUser | null>(USER_COOKIE, {
     default: () => null,
     sameSite: 'lax',
     secure: false
@@ -48,7 +48,7 @@ export function useAdminAuth() {
 
   const isAuthenticated = computed(() => state.value.user !== null && state.value.token !== null)
 
-  function setSession(user: AdminUser, token: AdminToken, twoFactorEnabled: boolean) {
+  function setSession(user: AdminAuthUser, token: AdminToken, twoFactorEnabled: boolean) {
     state.value = { user, token, twoFactorEnabled }
     userCookie.value = user
     tokenCookie.value = token

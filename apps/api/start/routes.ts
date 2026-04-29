@@ -16,6 +16,7 @@ const AdminCategoriesController = () => import('#controllers/admin_categories_co
 const ProductImagesController = () => import('#controllers/product_images_controller')
 const SiteConfigController = () => import('#controllers/site_config_controller')
 const AdminHomepageController = () => import('#controllers/admin_homepage_controller')
+const AdminUsersController = () => import('#controllers/admin_users_controller')
 
 router.get('/', async () => ({ hello: 'world' }))
 
@@ -99,6 +100,17 @@ router
     router.patch('intro', [AdminHomepageController, 'updateIntro'])
   })
   .prefix('/admin/homepage')
+  .use([middleware.auth(), middleware.admin()])
+
+router
+  .group(() => {
+    router.get('/', [AdminUsersController, 'index'])
+    router.get(':id', [AdminUsersController, 'show'])
+    router.patch(':id', [AdminUsersController, 'update'])
+    router.delete(':id', [AdminUsersController, 'destroy'])
+    router.post(':id/reset-password', [AdminUsersController, 'sendPasswordReset'])
+  })
+  .prefix('/admin/users')
   .use([middleware.auth(), middleware.admin()])
 
 router

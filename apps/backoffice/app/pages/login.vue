@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import type { AdminToken, AdminUser } from '~/composables/useAdminAuth'
+import type { AdminToken, AdminAuthUser } from '~/composables/useAdminAuth'
 
 definePageMeta({ layout: 'auth' })
 
 interface LoginSuccess {
-  user: AdminUser
+  user: AdminAuthUser
   token: AdminToken
   twoFactorEnabled: boolean
 }

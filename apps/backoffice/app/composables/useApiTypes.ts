@@ -25,6 +25,50 @@ export interface AdminCategory {
   productCount?: number
 }
 
+export interface AdminUser {
+  id: number
+  email: string
+  fullName: string | null
+  phone: string | null
+  role: 'customer' | 'admin'
+  isActive: boolean
+  emailVerifiedAt: string | null
+  createdAt: string
+  accountStatus: 'active' | 'inactive' | 'pending'
+  orderCount?: number
+  totalRevenue?: number
+}
+
+export interface AdminAddress {
+  id: number
+  userId: number
+  fullName: string | null
+  line1: string
+  line2: string | null
+  city: string
+  postalCode: string
+  country: string
+  isDefault: boolean
+}
+
+export interface AdminOrder {
+  id: number
+  userId: number
+  status: string
+  subtotal: string | number
+  tax: string | number
+  total: string | number
+  createdAt: string
+}
+
+export interface AdminUserDetail {
+  user: AdminUser
+  addresses: AdminAddress[]
+  orders: AdminOrder[]
+  orderCount: number
+  totalRevenue: number
+}
+
 export interface AdminProduct {
   id: number
   name: string
