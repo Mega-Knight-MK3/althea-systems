@@ -15,6 +15,7 @@ export const createCategoryValidator = vine.compile(
     parentId: vine.number().positive().optional(),
     imagePath: vine.string().trim().maxLength(255).optional(),
     position: vine.number().withoutDecimals().min(0).optional(),
+    isActive: vine.boolean().optional(),
   })
 )
 
@@ -36,5 +37,27 @@ export const updateCategoryValidator = vine.withMetaData<{ categoryId: number }>
     parentId: vine.number().positive().nullable().optional(),
     imagePath: vine.string().trim().maxLength(255).nullable().optional(),
     position: vine.number().withoutDecimals().min(0).optional(),
+    isActive: vine.boolean().optional(),
+  })
+)
+
+export const reorderCategoriesValidator = vine.compile(
+  vine.object({
+    items: vine
+      .array(
+        vine.object({
+          id: vine.number().positive(),
+          position: vine.number().withoutDecimals().min(0),
+        })
+      )
+      .minLength(1)
+      .maxLength(500),
+  })
+)
+
+export const bulkSetCategoryStatusValidator = vine.compile(
+  vine.object({
+    ids: vine.array(vine.number().positive()).minLength(1).maxLength(200),
+    isActive: vine.boolean(),
   })
 )
