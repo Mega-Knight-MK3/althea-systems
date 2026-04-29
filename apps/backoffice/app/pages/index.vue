@@ -76,7 +76,7 @@ const statusColor: Record<string, 'primary' | 'success' | 'warning' | 'error' | 
     </template>
   </UDashboardNavbar>
 
-  <UDashboardPanelContent>
+  <UDashboardPanelContent class="p-4 sm:p-6">
     <div class="space-y-6">
       <header>
         <p class="text-sm text-muted">Bienvenue</p>
