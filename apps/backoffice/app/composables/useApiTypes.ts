@@ -111,6 +111,32 @@ export interface AdminUserDetail {
   totalRevenue: number
 }
 
+export interface AdminInvoice {
+  id: number
+  invoiceNumber: string
+  orderId: number
+  subtotal: string | number
+  tax: string | number
+  total: string | number
+  pdfPath: string | null
+  issuedAt: string
+  customer: string
+  customerEmail: string | null
+  orderStatus: string | null
+}
+
+export interface AdminCreditNote {
+  id: number
+  creditNoteNumber: string
+  invoiceId: number
+  invoiceNumber: string | null
+  amount: string | number
+  reason: string | null
+  pdfPath: string | null
+  issuedAt: string
+  customer: string
+}
+
 export interface AdminProduct {
   id: number
   name: string
