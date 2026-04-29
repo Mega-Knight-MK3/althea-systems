@@ -1,0 +1,61 @@
+{
+  "nav": {
+    "search": "ابحث عن منتج أو فئة",
+    "search_action": "بدء البحث",
+    "cart": "السلة",
+    "account": "حسابي",
+    "language": "تغيير اللغة",
+    "open_menu": "فتح القائمة",
+    "close": "إغلاق"
+  },
+  "footer": {
+    "rights": "© {year} Althea Systems",
+    "legal": "روابط قانونية",
+    "cgu": "الشروط",
+    "legal_notice": "إشعار قانوني",
+    "contact": "اتصل بنا"
+  },
+  "home": {
+    "stat_expertise": "سنوات من الخبرة",
+    "stat_cabinets": "عيادة مجهزة",
+    "stat_sav": "زمن الاستجابة للدعم"
+  },
+  "contact": {
+    "eyebrow": "اتصل بنا",
+    "title": "هل لديك سؤال أو حاجة محددة؟",
+    "lead": "يرد فريقنا عادةً خلال 24 ساعة عمل. للطلبات العاجلة، يرجى ذكر ذلك في الموضوع.",
+    "name": "الاسم",
+    "email": "البريد الإلكتروني",
+    "subject": "الموضوع",
+    "message": "الرسالة",
+    "submit": "إرسال الرسالة",
+    "submitting": "جارٍ الإرسال...",
+    "received": "تم استلام رسالتك",
+    "thanks": "شكرًا {name}. سيتواصل معك فريقنا قريبًا على {email}.",
+    "another": "إرسال رسالة أخرى",
+    "errors": {
+      "name": "الاسم مطلوب.",
+      "email": "البريد الإلكتروني غير صالح.",
+      "subject": "الموضوع مطلوب.",
+      "message": "الرسالة قصيرة جدًا (10 أحرف على الأقل).",
+      "send_failed": "تعذر إرسال الرسالة."
+    },
+    "success_toast": "تم إرسال الرسالة. سيرد عليك فريقنا قريبًا."
+  },
+  "chatbot": {
+    "open": "تواصل معنا",
+    "minimize": "تصغير",
+    "title": "مساعد ألثيا",
+    "subtitle_default": "إجابات فورية",
+    "subtitle_escalated": "تم إشراك مستشار",
+    "reset": "إعادة ضبط",
+    "input_placeholder": "اطرح سؤالك...",
+    "send": "إرسال",
+    "escalation_title": "تحويل إلى مستشار",
+    "escalation_name": "الاسم (اختياري)",
+    "escalation_email": "البريد الإلكتروني (مطلوب)",
+    "escalation_subject": "الموضوع (اختياري)",
+    "escalation_submit": "إرسال إلى مستشار",
+    "escalation_sending": "جارٍ الإرسال..."
+  }
+}

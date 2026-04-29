@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const { itemCount, isEmpty } = useCart()
 const { isAuthenticated } = useAuth()
+const { t } = useI18n()
 
 const emit = defineEmits<{ (e: 'open-menu'): void }>()
 </script>
@@ -20,7 +21,7 @@ const emit = defineEmits<{ (e: 'open-menu'): void }>()
         <NuxtLink
           to="/cart"
           class="relative text-neutral-700 transition-colors hover:text-brand-500"
-          aria-label="Panier"
+          :aria-label="t('nav.cart')"
         >
           <svg
             viewBox="0 0 24 24"
@@ -41,37 +42,18 @@ const emit = defineEmits<{ (e: 'open-menu'): void }>()
           <span
             v-if="!isEmpty"
             class="bg-brand-500 absolute -top-1 -right-2 inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] leading-none font-semibold text-white"
-            aria-label="Articles dans le panier"
+            :aria-label="t('nav.cart')"
           >
             {{ itemCount }}
           </span>
         </NuxtLink>
 
-        <button
-          type="button"
-          class="hidden text-neutral-700 transition-colors hover:text-brand-500 md:inline-flex"
-          aria-label="Changer la langue"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            class="h-6 w-6"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.8"
-            aria-hidden="true"
-          >
-            <path d="M3 6h12" stroke-linecap="round" />
-            <path d="M9 4v2" stroke-linecap="round" />
-            <path d="M5 6c0 5 3 8 7 9" stroke-linecap="round" stroke-linejoin="round" />
-            <path d="M14 15c0-3 2-5 4-5s4 2 4 5l-2 5" stroke-linecap="round" stroke-linejoin="round" />
-            <path d="M16 17h6" stroke-linecap="round" />
-          </svg>
-        </button>
+        <AppLanguageMenu class="hidden md:block" />
 
         <NuxtLink
           :to="isAuthenticated ? '/account' : '/login'"
           class="hidden h-9 w-9 items-center justify-center rounded-full bg-brand-500 text-white transition-colors hover:bg-brand-700 md:inline-flex"
-          :aria-label="isAuthenticated ? 'Mon compte' : 'Se connecter'"
+          :aria-label="t('nav.account')"
         >
           <svg viewBox="0 0 24 24" class="h-5 w-5" fill="currentColor" aria-hidden="true">
             <circle cx="12" cy="9" r="4" />
@@ -82,7 +64,7 @@ const emit = defineEmits<{ (e: 'open-menu'): void }>()
         <button
           type="button"
           class="text-neutral-700 transition-colors hover:text-brand-500"
-          aria-label="Ouvrir le menu"
+          :aria-label="t('nav.open_menu')"
           @click="emit('open-menu')"
         >
           <svg

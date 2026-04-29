@@ -1,0 +1,61 @@
+{
+  "nav": {
+    "search": "Search for a product or category",
+    "search_action": "Run search",
+    "cart": "Cart",
+    "account": "My account",
+    "language": "Change language",
+    "open_menu": "Open menu",
+    "close": "Close"
+  },
+  "footer": {
+    "rights": "© {year} Althea Systems",
+    "legal": "Legal links",
+    "cgu": "Terms",
+    "legal_notice": "Legal notice",
+    "contact": "Contact"
+  },
+  "home": {
+    "stat_expertise": "years of expertise",
+    "stat_cabinets": "practices equipped",
+    "stat_sav": "SAV response time"
+  },
+  "contact": {
+    "eyebrow": "Contact us",
+    "title": "A question, a specific need?",
+    "lead": "Our team usually replies within 24 business hours. For urgent after-sales requests, mention it in the subject line.",
+    "name": "Name",
+    "email": "Email",
+    "subject": "Subject",
+    "message": "Message",
+    "submit": "Send message",
+    "submitting": "Sending...",
+    "received": "Message received",
+    "thanks": "Thanks {name}. Our team will get back to you shortly at {email}.",
+    "another": "Send another message",
+    "errors": {
+      "name": "Your name is required.",
+      "email": "Invalid email address.",
+      "subject": "Subject is required.",
+      "message": "Message too short (10 characters minimum).",
+      "send_failed": "Failed to send the message."
+    },
+    "success_toast": "Message sent. Our team will reply shortly."
+  },
+  "chatbot": {
+    "open": "Contact us",
+    "minimize": "Minimize",
+    "title": "Althea Assistant",
+    "subtitle_default": "Instant answers",
+    "subtitle_escalated": "Agent involved",
+    "reset": "Reset",
+    "input_placeholder": "Ask a question...",
+    "send": "Send",
+    "escalation_title": "Forward to an agent",
+    "escalation_name": "Name (optional)",
+    "escalation_email": "Email (required)",
+    "escalation_subject": "Subject (optional)",
+    "escalation_submit": "Send to agent",
+    "escalation_sending": "Sending..."
+  }
+}
