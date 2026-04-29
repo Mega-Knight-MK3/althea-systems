@@ -11,6 +11,9 @@ const menuOpen = ref(false)
     </main>
     <AppFooter />
     <AppMobileMenu :open="menuOpen" @close="menuOpen = false" />
+    <ClientOnly>
+      <AppChatbot />
+    </ClientOnly>
     <AppToastHost />
   </div>
 </template>
