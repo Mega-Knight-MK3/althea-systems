@@ -25,6 +25,17 @@ const categoryId = ref<number | undefined>(
 )
 const inStockOnly = ref(route.query.inStockOnly === '1')
 const selectedSort = ref(String(route.query.sort ?? 'relevance-desc'))
+const page = ref(route.query.page ? Number(route.query.page) : 1)
+const PER_PAGE = 24
+
+watch([query, minPrice, maxPrice, categoryId, inStockOnly, selectedSort], () => {
+  page.value = 1
+})
+
+function changePage(next: number) {
+  page.value = next
+  if (import.meta.client) window.scrollTo({ top: 0, behavior: 'smooth' })
+}
 
 const { data: categoriesResult } = await useCategories()
 const categories = computed(() => categoriesResult.value ?? [])
@@ -39,7 +50,8 @@ const productParams = computed(() => {
     inStockOnly: inStockOnly.value || undefined,
     sort: option.sort,
     order: option.order,
-    perPage: 24,
+    perPage: PER_PAGE,
+    page: page.value,
   }
 })
 
@@ -57,6 +69,7 @@ watchDebounced(
         maxPrice: maxPrice.value,
         inStockOnly: inStockOnly.value ? '1' : undefined,
         sort: selectedSort.value,
+        page: page.value > 1 ? page.value : undefined,
       },
     })
   },
@@ -174,6 +187,16 @@ function clearFilters() {
           <AppProductGrid
             :products="products"
             empty-message="Aucun produit ne correspond à vos critères."
+          />
+        </div>
+
+        <div v-if="productsResult?.meta && productsResult.meta.lastPage > 1" class="mt-8">
+          <AppPagination
+            :current-page="productsResult.meta.currentPage"
+            :last-page="productsResult.meta.lastPage"
+            :total="productsResult.meta.total"
+            :per-page="productsResult.meta.perPage"
+            @update:page="changePage"
           />
         </div>
       </div>

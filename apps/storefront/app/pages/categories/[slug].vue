@@ -22,6 +22,10 @@ const sortOptions: SortOption[] = [
 
 const selectedSort = ref('priority-desc')
 const inStockOnly = ref(false)
+const page = ref(1)
+const PER_PAGE = 24
+
+watch([selectedSort, inStockOnly], () => { page.value = 1 })
 
 const productParams = computed(() => {
   const option = sortOptions.find((o) => o.value === selectedSort.value)!
@@ -30,9 +34,15 @@ const productParams = computed(() => {
     sort: option.sort,
     order: option.order,
     inStockOnly: inStockOnly.value || undefined,
-    perPage: 24,
+    perPage: PER_PAGE,
+    page: page.value,
   }
 })
+
+function changePage(next: number) {
+  page.value = next
+  if (import.meta.client) window.scrollTo({ top: 0, behavior: 'smooth' })
+}
 
 const { data: productsResult } = await useProducts(productParams)
 const products = computed(() => productsResult.value?.data ?? [])
@@ -75,6 +85,16 @@ const isMobile = useMediaQuery()
 
       <div class="mt-8">
         <AppProductGrid :products="products" :layout="isMobile ? 'list' : 'grid'" />
+      </div>
+
+      <div v-if="productsResult?.meta && productsResult.meta.lastPage > 1" class="mt-8">
+        <AppPagination
+          :current-page="productsResult.meta.currentPage"
+          :last-page="productsResult.meta.lastPage"
+          :total="productsResult.meta.total"
+          :per-page="productsResult.meta.perPage"
+          @update:page="changePage"
+        />
       </div>
     </section>
   </div>
