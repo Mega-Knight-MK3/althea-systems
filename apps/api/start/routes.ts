@@ -2,6 +2,7 @@ import router from '@adonisjs/core/services/router'
 import { middleware } from './kernel.js'
 
 const AuthController = () => import('#controllers/auth_controller')
+const AdminAuthController = () => import('#controllers/admin_auth_controller')
 const PasswordResetsController = () => import('#controllers/password_resets_controller')
 const AccountController = () => import('#controllers/account_controller')
 const AddressesController = () => import('#controllers/addresses_controller')
@@ -62,6 +63,23 @@ router
   })
   .prefix('/account')
   .use(middleware.auth())
+
+router
+  .group(() => {
+    router.post('login', [AdminAuthController, 'login'])
+    router.post('verify-2fa', [AdminAuthController, 'verify2fa'])
+
+    router
+      .group(() => {
+        router.get('me', [AdminAuthController, 'me'])
+        router.post('logout', [AdminAuthController, 'logout'])
+        router.post('totp/enroll', [AdminAuthController, 'startTotpEnrollment'])
+        router.post('totp/confirm', [AdminAuthController, 'confirmTotpEnrollment'])
+        router.post('totp/disable', [AdminAuthController, 'disableTotp'])
+      })
+      .use([middleware.auth(), middleware.admin()])
+  })
+  .prefix('/admin/auth')
 
 router
   .group(() => {
