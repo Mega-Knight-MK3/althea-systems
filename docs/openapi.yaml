@@ -1,0 +1,634 @@
+openapi: 3.1.0
+info:
+  title: Althea Systems API
+  version: 1.0.0
+  description: |
+    REST API powering the Althea Systems storefront and backoffice. Authentication uses
+    bearer access tokens issued by AdonisJS Auth (DbAccessTokensProvider). All admin
+    endpoints require a token whose owner has `role = "admin"` and is active.
+servers:
+  - url: http://localhost:3333
+    description: Local dev
+  - url: https://api.althea.example.com
+    description: Production
+tags:
+  - name: Public
+    description: Endpoints reachable without authentication
+  - name: Auth
+    description: Customer authentication
+  - name: Admin auth
+    description: Backoffice authentication with TOTP 2FA
+  - name: Account
+    description: Authenticated customer profile, addresses, payment methods, orders
+  - name: Catalog
+    description: Categories and products
+  - name: Checkout
+    description: Pricing quotes and Stripe payment intent creation
+  - name: Contact
+    description: Public contact form and chatbot
+  - name: Admin
+    description: Backoffice resources guarded by auth + admin middleware
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: opaque
+  schemas:
+    Pagination:
+      type: object
+      properties:
+        meta:
+          type: object
+          properties:
+            total: { type: integer }
+            perPage: { type: integer }
+            currentPage: { type: integer }
+            lastPage: { type: integer }
+        data:
+          type: array
+          items: {}
+    User:
+      type: object
+      properties:
+        id: { type: integer }
+        email: { type: string, format: email }
+        fullName: { type: string, nullable: true }
+        phone: { type: string, nullable: true }
+        role: { type: string, enum: [customer, admin] }
+        emailVerifiedAt: { type: string, nullable: true, format: date-time }
+        isActive: { type: boolean }
+        createdAt: { type: string, format: date-time }
+    Token:
+      type: object
+      properties:
+        type: { type: string, example: bearer }
+        value: { type: string }
+        expiresAt: { type: string, format: date-time, nullable: true }
+    Address:
+      type: object
+      properties:
+        id: { type: integer }
+        userId: { type: integer }
+        fullName: { type: string, nullable: true }
+        street: { type: string }
+        line2: { type: string, nullable: true }
+        city: { type: string }
+        postalCode: { type: string }
+        country: { type: string }
+        isDefault: { type: boolean }
+    PaymentMethod:
+      type: object
+      properties:
+        id: { type: integer }
+        userId: { type: integer }
+        type: { type: string, example: card }
+        brand: { type: string }
+        lastFour: { type: string }
+        expMonth: { type: integer }
+        expYear: { type: integer }
+        isDefault: { type: boolean }
+    Category:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        slug: { type: string }
+        description: { type: string, nullable: true }
+        parentId: { type: integer, nullable: true }
+        imagePath: { type: string, nullable: true }
+        position: { type: integer }
+        isActive: { type: boolean }
+    Product:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        slug: { type: string }
+        description: { type: string, nullable: true }
+        price: { type: number, format: float }
+        vatRate: { type: number, format: float }
+        stock: { type: integer }
+        categoryId: { type: integer, nullable: true }
+        category: { $ref: '#/components/schemas/Category' }
+        isActive: { type: boolean }
+        sortPriority: { type: integer }
+        createdAt: { type: string, format: date-time }
+    Order:
+      type: object
+      properties:
+        id: { type: integer }
+        userId: { type: integer }
+        status:
+          type: string
+          enum: [pending, paid, processing, shipped, delivered, cancelled, refunded]
+        subtotal: { type: number }
+        tax: { type: number }
+        shippingCost: { type: number }
+        total: { type: number }
+        stripePaymentIntentId: { type: string, nullable: true }
+        placedAt: { type: string, format: date-time, nullable: true }
+        createdAt: { type: string, format: date-time }
+    Invoice:
+      type: object
+      properties:
+        id: { type: integer }
+        orderId: { type: integer }
+        invoiceNumber: { type: string }
+        subtotal: { type: number }
+        tax: { type: number }
+        total: { type: number }
+        pdfPath: { type: string, nullable: true }
+        issuedAt: { type: string, format: date-time }
+    Error:
+      type: object
+      properties:
+        message: { type: string }
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              message: { type: string }
+              field: { type: string }
+
+paths:
+  /:
+    get:
+      tags: [Public]
+      summary: API health
+      responses:
+        '200': { description: ok }
+
+  /site-config/homepage:
+    get:
+      tags: [Public]
+      summary: Homepage configuration (carousel + intro)
+      responses:
+        '200': { description: ok }
+
+  /contact:
+    post:
+      tags: [Contact]
+      summary: Submit a contact-form message
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, subject, message]
+              properties:
+                name: { type: string }
+                email: { type: string, format: email }
+                subject: { type: string }
+                message: { type: string }
+      responses:
+        '201': { description: created }
+
+  /chatbot/sessions:
+    post:
+      tags: [Contact]
+      summary: Start a chatbot session
+      responses: { '201': { description: created } }
+  /chatbot/sessions/{id}/messages:
+    post:
+      tags: [Contact]
+      summary: Post a message to the chatbot
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses: { '201': { description: created } }
+  /chatbot/sessions/{id}/escalate:
+    post:
+      tags: [Contact]
+      summary: Escalate a chatbot session to a human agent
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses: { '202': { description: accepted } }
+
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Create a customer account
+      responses: { '201': { description: created } }
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login with email/password
+      responses: { '200': { description: ok } }
+  /auth/me:
+    get:
+      tags: [Auth]
+      security: [{ bearerAuth: [] }]
+      summary: Current authenticated user
+      responses: { '200': { description: ok } }
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      security: [{ bearerAuth: [] }]
+      summary: Rotate the session token
+      responses: { '200': { description: ok } }
+  /auth/logout:
+    post:
+      tags: [Auth]
+      security: [{ bearerAuth: [] }]
+      summary: Revoke current session
+      responses: { '204': { description: no content } }
+  /auth/verify-email:
+    post:
+      tags: [Auth]
+      summary: Verify a one-time email token
+      responses: { '200': { description: ok } }
+  /auth/resend-verification:
+    post:
+      tags: [Auth]
+      security: [{ bearerAuth: [] }]
+      responses: { '202': { description: accepted } }
+  /auth/forgot-password:
+    post:
+      tags: [Auth]
+      responses: { '200': { description: ok } }
+  /auth/reset-password:
+    post:
+      tags: [Auth]
+      responses: { '200': { description: ok } }
+
+  /admin/auth/login:
+    post:
+      tags: [Admin auth]
+      summary: Admin login (returns 2FA challenge if enrolled)
+      responses: { '200': { description: ok }, '202': { description: 2fa challenge required } }
+  /admin/auth/verify-2fa:
+    post:
+      tags: [Admin auth]
+      summary: Verify TOTP code or recovery code against a challenge token
+      responses: { '200': { description: ok }, '401': { description: invalid code } }
+  /admin/auth/me:
+    get:
+      tags: [Admin auth]
+      security: [{ bearerAuth: [] }]
+      responses: { '200': { description: ok }, '403': { description: not admin } }
+  /admin/auth/logout:
+    post:
+      tags: [Admin auth]
+      security: [{ bearerAuth: [] }]
+      responses: { '204': { description: no content } }
+  /admin/auth/totp/enroll:
+    post:
+      tags: [Admin auth]
+      security: [{ bearerAuth: [] }]
+      responses: { '200': { description: returns secret + QR code } }
+  /admin/auth/totp/confirm:
+    post:
+      tags: [Admin auth]
+      security: [{ bearerAuth: [] }]
+      summary: Confirm TOTP enrollment with the first valid code
+      responses: { '200': { description: ok, returns one-time recovery codes } }
+  /admin/auth/totp/disable:
+    post:
+      tags: [Admin auth]
+      security: [{ bearerAuth: [] }]
+      summary: Disable 2FA (requires password + valid code/recovery code)
+      responses: { '204': { description: no content } }
+
+  /account:
+    get:
+      tags: [Account]
+      security: [{ bearerAuth: [] }]
+      responses: { '200': { description: ok } }
+    patch:
+      tags: [Account]
+      security: [{ bearerAuth: [] }]
+      responses: { '200': { description: ok } }
+  /account/email:
+    post:
+      tags: [Account]
+      security: [{ bearerAuth: [] }]
+      responses: { '202': { description: verification email sent } }
+  /account/password:
+    post:
+      tags: [Account]
+      security: [{ bearerAuth: [] }]
+      responses: { '204': { description: no content } }
+  /account/deactivate:
+    post:
+      tags: [Account]
+      security: [{ bearerAuth: [] }]
+      responses: { '204': { description: no content } }
+  /account/addresses:
+    get: { tags: [Account], security: [{ bearerAuth: [] }], responses: { '200': { description: ok } } }
+    post: { tags: [Account], security: [{ bearerAuth: [] }], responses: { '201': { description: created } } }
+  /account/addresses/{id}:
+    patch:
+      tags: [Account]
+      security: [{ bearerAuth: [] }]
+      parameters: [{ in: path, name: id, required: true, schema: { type: integer } }]
+      responses: { '200': { description: ok } }
+    delete:
+      tags: [Account]
+      security: [{ bearerAuth: [] }]
+      parameters: [{ in: path, name: id, required: true, schema: { type: integer } }]
+      responses: { '204': { description: no content } }
+  /account/payment-methods:
+    get: { tags: [Account], security: [{ bearerAuth: [] }], responses: { '200': { description: ok } } }
+    post: { tags: [Account], security: [{ bearerAuth: [] }], responses: { '201': { description: created } } }
+  /account/payment-methods/setup-intent:
+    post:
+      tags: [Account]
+      security: [{ bearerAuth: [] }]
+      summary: Create a Stripe SetupIntent so the customer can save a card
+      responses: { '200': { description: ok } }
+  /account/payment-methods/{id}:
+    patch:
+      tags: [Account]
+      security: [{ bearerAuth: [] }]
+      parameters: [{ in: path, name: id, required: true, schema: { type: integer } }]
+      responses: { '200': { description: ok } }
+    delete:
+      tags: [Account]
+      security: [{ bearerAuth: [] }]
+      parameters: [{ in: path, name: id, required: true, schema: { type: integer } }]
+      responses: { '204': { description: no content } }
+  /account/orders:
+    get: { tags: [Account], security: [{ bearerAuth: [] }], responses: { '200': { description: ok } } }
+    post: { tags: [Account], security: [{ bearerAuth: [] }], responses: { '201': { description: created } } }
+  /account/orders/{id}:
+    get:
+      tags: [Account]
+      security: [{ bearerAuth: [] }]
+      parameters: [{ in: path, name: id, required: true, schema: { type: integer } }]
+      responses: { '200': { description: ok } }
+  /account/orders/{id}/invoice:
+    get:
+      tags: [Account]
+      security: [{ bearerAuth: [] }]
+      parameters: [{ in: path, name: id, required: true, schema: { type: integer } }]
+      responses:
+        '200':
+          description: invoice PDF
+          content:
+            application/pdf: {}
+
+  /categories:
+    get:
+      tags: [Catalog]
+      responses: { '200': { description: ok } }
+  /categories/{slug}:
+    get:
+      tags: [Catalog]
+      parameters: [{ in: path, name: slug, required: true, schema: { type: string } }]
+      responses: { '200': { description: ok }, '404': { description: not found } }
+
+  /products:
+    get:
+      tags: [Catalog]
+      summary: Public product list (active only)
+      parameters:
+        - in: query
+          name: q
+          schema: { type: string }
+        - in: query
+          name: categoryId
+          schema: { type: integer }
+        - in: query
+          name: sort
+          schema: { type: string, enum: [priority, price, date, stock, relevance, name] }
+        - in: query
+          name: page
+          schema: { type: integer, default: 1 }
+        - in: query
+          name: perPage
+          schema: { type: integer, default: 24 }
+      responses: { '200': { description: ok } }
+  /products/{slug}:
+    get:
+      tags: [Catalog]
+      parameters: [{ in: path, name: slug, required: true, schema: { type: string } }]
+      responses: { '200': { description: ok } }
+  /products/{slug}/similar:
+    get:
+      tags: [Catalog]
+      parameters: [{ in: path, name: slug, required: true, schema: { type: string } }]
+      responses: { '200': { description: ok } }
+  /products/{slug}/images:
+    get:
+      tags: [Catalog]
+      parameters: [{ in: path, name: slug, required: true, schema: { type: string } }]
+      responses: { '200': { description: ok } }
+  /images/{id}:
+    get:
+      tags: [Catalog]
+      summary: Stream a product image stored in MongoDB GridFS
+      parameters: [{ in: path, name: id, required: true, schema: { type: string } }]
+      responses: { '200': { description: image binary } }
+
+  /checkout/quote:
+    post:
+      tags: [Checkout]
+      summary: Price a cart (subtotal + tax + shipping)
+      responses: { '200': { description: ok } }
+  /checkout/intent:
+    post:
+      tags: [Checkout]
+      security: [{ bearerAuth: [] }]
+      summary: Create a Stripe PaymentIntent for the current cart
+      responses: { '200': { description: ok } }
+
+  /admin/dashboard/stats:
+    get:
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      responses: { '200': { description: ok } }
+  /admin/dashboard/sales:
+    get:
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: query
+          name: range
+          schema: { type: string, enum: [7d, 5w] }
+      responses: { '200': { description: ok } }
+
+  /admin/homepage:
+    get: { tags: [Admin], security: [{ bearerAuth: [] }], responses: { '200': { description: ok } } }
+  /admin/homepage/slides:
+    put:
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      summary: Replace all carousel slides (max 3)
+      responses: { '200': { description: ok } }
+  /admin/homepage/intro:
+    patch:
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      responses: { '200': { description: ok } }
+
+  /admin/categories:
+    get: { tags: [Admin], security: [{ bearerAuth: [] }], responses: { '200': { description: ok } } }
+    post: { tags: [Admin], security: [{ bearerAuth: [] }], responses: { '201': { description: created } } }
+  /admin/categories/reorder:
+    post: { tags: [Admin], security: [{ bearerAuth: [] }], responses: { '204': { description: no content } } }
+  /admin/categories/bulk-status:
+    post: { tags: [Admin], security: [{ bearerAuth: [] }], responses: { '204': { description: no content } } }
+  /admin/categories/{id}:
+    patch:
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      parameters: [{ in: path, name: id, required: true, schema: { type: integer } }]
+      responses: { '200': { description: ok } }
+    delete:
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      parameters: [{ in: path, name: id, required: true, schema: { type: integer } }]
+      responses: { '204': { description: no content } }
+
+  /admin/products:
+    get:
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: query
+          name: status
+          schema: { type: string, enum: [all, active, inactive] }
+      responses: { '200': { description: ok } }
+    post: { tags: [Admin], security: [{ bearerAuth: [] }], responses: { '201': { description: created } } }
+  /admin/products/{id}:
+    patch:
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      parameters: [{ in: path, name: id, required: true, schema: { type: integer } }]
+      responses: { '200': { description: ok } }
+    delete:
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      parameters: [{ in: path, name: id, required: true, schema: { type: integer } }]
+      responses: { '204': { description: no content } }
+  /admin/products/{slug}/images:
+    post:
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      summary: Upload a product image (multipart, MongoDB GridFS storage)
+      parameters: [{ in: path, name: slug, required: true, schema: { type: string } }]
+      responses: { '201': { description: created } }
+  /admin/products/images/{id}:
+    delete:
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      parameters: [{ in: path, name: id, required: true, schema: { type: string } }]
+      responses: { '204': { description: no content } }
+
+  /admin/users:
+    get:
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: query
+          name: status
+          schema: { type: string, enum: [all, active, inactive, pending] }
+      responses: { '200': { description: ok } }
+  /admin/users/{id}:
+    get:
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      parameters: [{ in: path, name: id, required: true, schema: { type: integer } }]
+      responses: { '200': { description: ok } }
+    patch:
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      parameters: [{ in: path, name: id, required: true, schema: { type: integer } }]
+      responses: { '200': { description: ok } }
+    delete:
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      parameters: [{ in: path, name: id, required: true, schema: { type: integer } }]
+      responses: { '204': { description: no content } }
+  /admin/users/{id}/reset-password:
+    post:
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      parameters: [{ in: path, name: id, required: true, schema: { type: integer } }]
+      responses: { '202': { description: reset email sent } }
+
+  /admin/orders:
+    get:
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      responses: { '200': { description: ok } }
+  /admin/orders/{id}:
+    get:
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      parameters: [{ in: path, name: id, required: true, schema: { type: integer } }]
+      responses: { '200': { description: ok } }
+  /admin/orders/{id}/status:
+    patch:
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      parameters: [{ in: path, name: id, required: true, schema: { type: integer } }]
+      responses: { '200': { description: ok } }
+
+  /admin/invoices:
+    get: { tags: [Admin], security: [{ bearerAuth: [] }], responses: { '200': { description: ok } } }
+  /admin/invoices/{id}/download:
+    get:
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      parameters: [{ in: path, name: id, required: true, schema: { type: integer } }]
+      responses: { '200': { description: invoice PDF, content: { application/pdf: {} } } }
+  /admin/invoices/{id}/resend:
+    post:
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      parameters: [{ in: path, name: id, required: true, schema: { type: integer } }]
+      responses: { '202': { description: email sent } }
+  /admin/credit-notes:
+    get: { tags: [Admin], security: [{ bearerAuth: [] }], responses: { '200': { description: ok } } }
+    post: { tags: [Admin], security: [{ bearerAuth: [] }], responses: { '201': { description: created } } }
+  /admin/credit-notes/{id}/download:
+    get:
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      parameters: [{ in: path, name: id, required: true, schema: { type: integer } }]
+      responses: { '200': { description: credit note PDF, content: { application/pdf: {} } } }
+  /admin/credit-notes/{id}/resend:
+    post:
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      parameters: [{ in: path, name: id, required: true, schema: { type: integer } }]
+      responses: { '202': { description: email sent } }
+
+  /admin/messages:
+    get: { tags: [Admin], security: [{ bearerAuth: [] }], responses: { '200': { description: ok } } }
+  /admin/messages/{id}:
+    get:
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      parameters: [{ in: path, name: id, required: true, schema: { type: integer } }]
+      responses: { '200': { description: ok } }
+  /admin/messages/{id}/read:
+    patch:
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      parameters: [{ in: path, name: id, required: true, schema: { type: integer } }]
+      responses: { '204': { description: no content } }
+  /admin/chatbot/sessions:
+    get: { tags: [Admin], security: [{ bearerAuth: [] }], responses: { '200': { description: ok } } }
+  /admin/chatbot/sessions/{id}:
+    get:
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      parameters: [{ in: path, name: id, required: true, schema: { type: integer } }]
+      responses: { '200': { description: ok } }
+  /admin/chatbot/sessions/{id}/reply:
+    post:
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      parameters: [{ in: path, name: id, required: true, schema: { type: integer } }]
+      responses: { '201': { description: agent reply created } }

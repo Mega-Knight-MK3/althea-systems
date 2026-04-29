@@ -1,4 +1,7 @@
+import { readFile } from 'node:fs/promises'
+import path from 'node:path'
 import router from '@adonisjs/core/services/router'
+import app from '@adonisjs/core/services/app'
 import { middleware } from './kernel.js'
 
 const AuthController = () => import('#controllers/auth_controller')
@@ -24,6 +27,38 @@ const AdminInvoicesController = () => import('#controllers/admin_invoices_contro
 const AdminMessagesController = () => import('#controllers/admin_messages_controller')
 
 router.get('/', async () => ({ hello: 'world' }))
+
+router.get('/openapi.yaml', async ({ response }) => {
+  const file = path.join(app.makePath('..', '..', 'docs'), 'openapi.yaml')
+  const yaml = await readFile(file, 'utf8')
+  response.header('Content-Type', 'application/yaml')
+  return yaml
+})
+
+router.get('/docs', async ({ response }) => {
+  response.header('Content-Type', 'text/html')
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Althea API · Swagger UI</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css" />
+  <style>body { margin: 0 }</style>
+</head>
+<body>
+  <div id="swagger"></div>
+  <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+  <script>
+    window.ui = SwaggerUIBundle({
+      url: '/openapi.yaml',
+      dom_id: '#swagger',
+      deepLinking: true,
+      presets: [SwaggerUIBundle.presets.apis]
+    })
+  </script>
+</body>
+</html>`
+})
 
 router.get('/site-config/homepage', [SiteConfigController, 'homepage'])
 
