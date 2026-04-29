@@ -2,6 +2,7 @@
 const api = useApi()
 const toast = useToast()
 const { user } = useAuth()
+const { t } = useI18n()
 
 const state = reactive({
   name: user.value?.fullName ?? '',
@@ -14,16 +15,16 @@ const submitting = ref(false)
 const submitted = ref(false)
 
 useSeoMeta({
-  title: 'Contact — Althea Systems',
-  description: 'Une question, une commande spécifique ? Notre équipe vous répond rapidement.'
+  title: () => `${t('contact.title')} — Althea Systems`,
+  description: () => t('contact.lead')
 })
 
 function validate() {
   const next: Record<string, string> = {}
-  if (state.name.trim().length < 2) next.name = 'Votre nom est requis.'
-  if (!/^.+@.+\..+$/.test(state.email)) next.email = 'Adresse email invalide.'
-  if (state.subject.trim().length < 2) next.subject = 'Sujet requis.'
-  if (state.message.trim().length < 10) next.message = 'Message trop court (10 caractères minimum).'
+  if (state.name.trim().length < 2) next.name = t('contact.errors.name')
+  if (!/^.+@.+\..+$/.test(state.email)) next.email = t('contact.errors.email')
+  if (state.subject.trim().length < 2) next.subject = t('contact.errors.subject')
+  if (state.message.trim().length < 10) next.message = t('contact.errors.message')
   errors.value = next
   return Object.keys(next).length === 0
 }
@@ -43,11 +44,11 @@ async function submit() {
       }
     })
     submitted.value = true
-    toast.success('Message envoyé. Notre équipe vous répondra rapidement.')
+    toast.success(t('contact.success_toast'))
     state.subject = ''
     state.message = ''
   } catch (err) {
-    toast.error(extractMessage(err, "Impossible d'envoyer le message."))
+    toast.error(extractMessage(err, t('contact.errors.send_failed')))
   } finally {
     submitting.value = false
   }
@@ -66,12 +67,9 @@ function extractMessage(err: unknown, fallback: string) {
 <template>
   <main class="mx-auto max-w-3xl px-4 py-10 md:px-10 md:py-16">
     <header class="mb-8 text-center">
-      <p class="text-sm uppercase tracking-widest text-brand-500">Nous contacter</p>
-      <h1 class="mt-2 font-display text-3xl text-brand-text md:text-4xl">Une question, un besoin spécifique ?</h1>
-      <p class="mt-3 text-neutral-600">
-        Notre équipe vous répond généralement sous 24 heures ouvrées. Pour les urgences SAV,
-        précisez-le dans le sujet.
-      </p>
+      <p class="text-sm uppercase tracking-widest text-brand-500">{{ t('contact.eyebrow') }}</p>
+      <h1 class="mt-2 font-display text-3xl text-brand-text md:text-4xl">{{ t('contact.title') }}</h1>
+      <p class="mt-3 text-neutral-600">{{ t('contact.lead') }}</p>
     </header>
 
     <form
@@ -81,7 +79,7 @@ function extractMessage(err: unknown, fallback: string) {
     >
       <div class="grid gap-5 md:grid-cols-2">
         <label class="block text-sm font-medium">
-          Nom
+          {{ t('contact.name') }}
           <input
             v-model="state.name"
             type="text"
@@ -92,7 +90,7 @@ function extractMessage(err: unknown, fallback: string) {
           <AppFormError v-if="errors.name" :message="errors.name" />
         </label>
         <label class="block text-sm font-medium">
-          Email
+          {{ t('contact.email') }}
           <input
             v-model="state.email"
             type="email"
@@ -104,7 +102,7 @@ function extractMessage(err: unknown, fallback: string) {
         </label>
       </div>
       <label class="block text-sm font-medium">
-        Sujet
+        {{ t('contact.subject') }}
         <input
           v-model="state.subject"
           type="text"
@@ -114,7 +112,7 @@ function extractMessage(err: unknown, fallback: string) {
         <AppFormError v-if="errors.subject" :message="errors.subject" />
       </label>
       <label class="block text-sm font-medium">
-        Message
+        {{ t('contact.message') }}
         <textarea
           v-model="state.message"
           rows="6"
@@ -129,7 +127,7 @@ function extractMessage(err: unknown, fallback: string) {
           :disabled="submitting"
           class="rounded-lg bg-brand-500 px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {{ submitting ? 'Envoi...' : 'Envoyer le message' }}
+          {{ submitting ? t('contact.submitting') : t('contact.submit') }}
         </button>
       </div>
     </form>
@@ -143,16 +141,16 @@ function extractMessage(err: unknown, fallback: string) {
           <path d="m5 13 4 4L19 7" stroke-linecap="round" stroke-linejoin="round" />
         </svg>
       </div>
-      <h2 class="font-display text-xl text-brand-text">Message bien reçu</h2>
+      <h2 class="font-display text-xl text-brand-text">{{ t('contact.received') }}</h2>
       <p class="mt-2 text-sm text-neutral-700">
-        Merci {{ state.name }}. Notre équipe vous recontacte sous peu à <strong>{{ state.email }}</strong>.
+        {{ t('contact.thanks', { name: state.name, email: state.email }) }}
       </p>
       <button
         type="button"
         class="mt-5 rounded-lg border border-brand-300 px-5 py-2 text-sm font-semibold text-brand-text transition-colors hover:bg-brand-100"
         @click="submitted = false"
       >
-        Envoyer un autre message
+        {{ t('contact.another') }}
       </button>
     </div>
   </main>

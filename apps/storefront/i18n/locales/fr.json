@@ -1,0 +1,61 @@
+{
+  "nav": {
+    "search": "Rechercher un produit ou une catégorie",
+    "search_action": "Lancer la recherche",
+    "cart": "Panier",
+    "account": "Mon compte",
+    "language": "Changer la langue",
+    "open_menu": "Ouvrir le menu",
+    "close": "Fermer"
+  },
+  "footer": {
+    "rights": "© {year} Althea Systems",
+    "legal": "Liens légaux",
+    "cgu": "CGU",
+    "legal_notice": "Mentions légales",
+    "contact": "Contact"
+  },
+  "home": {
+    "stat_expertise": "ans d'expertise",
+    "stat_cabinets": "cabinets équipés",
+    "stat_sav": "vitesse de réponse SAV"
+  },
+  "contact": {
+    "eyebrow": "Nous contacter",
+    "title": "Une question, un besoin spécifique ?",
+    "lead": "Notre équipe vous répond généralement sous 24 heures ouvrées. Pour les urgences SAV, précisez-le dans le sujet.",
+    "name": "Nom",
+    "email": "Email",
+    "subject": "Sujet",
+    "message": "Message",
+    "submit": "Envoyer le message",
+    "submitting": "Envoi...",
+    "received": "Message bien reçu",
+    "thanks": "Merci {name}. Notre équipe vous recontacte sous peu à {email}.",
+    "another": "Envoyer un autre message",
+    "errors": {
+      "name": "Votre nom est requis.",
+      "email": "Adresse email invalide.",
+      "subject": "Sujet requis.",
+      "message": "Message trop court (10 caractères minimum).",
+      "send_failed": "Impossible d'envoyer le message."
+    },
+    "success_toast": "Message envoyé. Notre équipe vous répondra rapidement."
+  },
+  "chatbot": {
+    "open": "Contactez-nous",
+    "minimize": "Réduire",
+    "title": "Assistant Althea",
+    "subtitle_default": "Réponses instantanées",
+    "subtitle_escalated": "Conseiller mobilisé",
+    "reset": "Réinitialiser",
+    "input_placeholder": "Posez votre question...",
+    "send": "Envoyer",
+    "escalation_title": "Transmettre à un conseiller",
+    "escalation_name": "Nom (optionnel)",
+    "escalation_email": "Email (requis)",
+    "escalation_subject": "Sujet (optionnel)",
+    "escalation_submit": "Envoyer au conseiller",
+    "escalation_sending": "Envoi..."
+  }
+}

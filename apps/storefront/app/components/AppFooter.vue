@@ -1,9 +1,11 @@
 <script setup lang="ts">
-const legalLinks = [
-  { label: 'CGU', to: '/cgu' },
-  { label: 'Mentions légales', to: '/mentions-legales' },
-  { label: 'Contact', to: '/contact' },
-]
+const { t } = useI18n()
+
+const legalLinks = computed(() => [
+  { label: t('footer.cgu'), to: '/cgu' },
+  { label: t('footer.legal_notice'), to: '/mentions-legales' },
+  { label: t('footer.contact'), to: '/contact' },
+])
 
 const socialLinks = [
   { label: 'LinkedIn', href: 'https://www.linkedin.com/' },
@@ -18,10 +20,10 @@ const socialLinks = [
       class="mx-auto flex w-full max-w-[1440px] flex-col gap-6 px-10 py-10 md:flex-row md:items-center md:justify-between"
     >
       <p class="font-display text-sm tracking-wide">
-        © {{ new Date().getFullYear() }} Althea Systems
+        {{ t('footer.rights', { year: new Date().getFullYear() }) }}
       </p>
 
-      <nav aria-label="Liens légaux" class="flex flex-wrap items-center gap-6 text-sm">
+      <nav :aria-label="t('footer.legal')" class="flex flex-wrap items-center gap-6 text-sm">
         <NuxtLink
           v-for="link in legalLinks"
           :key="link.to"
