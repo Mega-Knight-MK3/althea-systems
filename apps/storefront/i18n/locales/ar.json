@@ -6,7 +6,8 @@
     "account": "حسابي",
     "language": "تغيير اللغة",
     "open_menu": "فتح القائمة",
-    "close": "إغلاق"
+    "close": "إغلاق",
+    "skip_to_content": "الانتقال إلى المحتوى الرئيسي"
   },
   "footer": {
     "rights": "© {year} Althea Systems",
