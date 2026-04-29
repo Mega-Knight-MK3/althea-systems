@@ -55,7 +55,6 @@ export interface HomepageConfig {
   }
   intro: {
     body: string
-    stats: Array<{ id: string; value: string; label: string }>
   }
   featuredProductSlugs: string[]
 }

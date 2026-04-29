@@ -1,6 +1,15 @@
 import { DateTime } from 'luxon'
 import { BaseModel, column } from '@adonisjs/lucid/orm'
 
+export interface SlideLocaleFields {
+  eyebrow?: string | null
+  title?: string | null
+  body?: string | null
+  ctaLabel?: string | null
+}
+
+export type SlideTranslations = Record<string, SlideLocaleFields>
+
 export default class HomepageSlide extends BaseModel {
   @column({ isPrimary: true })
   declare id: number
@@ -28,6 +37,15 @@ export default class HomepageSlide extends BaseModel {
 
   @column()
   declare isActive: boolean
+
+  @column({
+    prepare: (value: SlideTranslations | null) => JSON.stringify(value ?? {}),
+    consume: (value: string | object | null) => {
+      if (!value) return {}
+      return typeof value === 'string' ? JSON.parse(value) : value
+    },
+  })
+  declare translations: SlideTranslations
 
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime

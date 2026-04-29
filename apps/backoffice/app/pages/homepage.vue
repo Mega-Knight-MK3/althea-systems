@@ -1,13 +1,19 @@
 <script setup lang="ts">
-interface Slide {
-  id?: number
+type Locale = 'fr' | 'en' | 'ar'
+
+interface SlideLocaleFields {
   eyebrow: string
   title: string
   body: string
   ctaLabel: string
+}
+
+interface Slide extends SlideLocaleFields {
+  id?: number
   ctaUrl: string
   imageUrl: string
   isActive: boolean
+  translations: Record<Locale, SlideLocaleFields>
 }
 
 interface HomepagePayload {
@@ -21,12 +27,22 @@ interface HomepagePayload {
     imageUrl: string | null
     isActive: boolean
     position: number
+    translations?: Record<string, Partial<SlideLocaleFields>>
   }>
   introBody: string
+  introTranslations?: Record<string, string>
 }
 
 const api = useApi()
 const toast = useToast()
+
+const LOCALES: Array<{ value: Locale, label: string }> = [
+  { value: 'fr', label: 'Français (par défaut)' },
+  { value: 'en', label: 'English' },
+  { value: 'ar', label: 'العربية' }
+]
+
+const activeLocale = ref<Locale>('fr')
 
 const { data, refresh } = await useAsyncData<HomepagePayload>('admin-homepage', () =>
   api<HomepagePayload>('/admin/homepage')
@@ -34,6 +50,7 @@ const { data, refresh } = await useAsyncData<HomepagePayload>('admin-homepage', 
 
 const slides = ref<Slide[]>([])
 const introBody = ref('')
+const introTranslations = ref<Record<Locale, string>>({ fr: '', en: '', ar: '' })
 
 watch(data, (value) => {
   if (!value) return
@@ -46,15 +63,47 @@ watch(data, (value) => {
     ctaUrl: s.ctaUrl ?? '',
     imageUrl: s.imageUrl ?? '',
     isActive: s.isActive,
+    translations: {
+      fr: { eyebrow: '', title: '', body: '', ctaLabel: '' },
+      en: emptyTranslation(s.translations?.en),
+      ar: emptyTranslation(s.translations?.ar)
+    }
   }))
   introBody.value = value.introBody
+  introTranslations.value = {
+    fr: value.introBody,
+    en: value.introTranslations?.en ?? '',
+    ar: value.introTranslations?.ar ?? ''
+  }
 }, { immediate: true })
+
+function emptyTranslation(source?: Partial<SlideLocaleFields>): SlideLocaleFields {
+  return {
+    eyebrow: source?.eyebrow ?? '',
+    title: source?.title ?? '',
+    body: source?.body ?? '',
+    ctaLabel: source?.ctaLabel ?? ''
+  }
+}
 
 const savingSlides = ref(false)
 const savingIntro = ref(false)
 
 function newSlide(): Slide {
-  return { eyebrow: '', title: '', body: '', ctaLabel: '', ctaUrl: '', imageUrl: '', isActive: true }
+  return {
+    eyebrow: '',
+    title: '',
+    body: '',
+    ctaLabel: '',
+    ctaUrl: '',
+    imageUrl: '',
+    isActive: true,
+    translations: {
+      fr: { eyebrow: '', title: '', body: '', ctaLabel: '' },
+      en: { eyebrow: '', title: '', body: '', ctaLabel: '' },
+      ar: { eyebrow: '', title: '', body: '', ctaLabel: '' }
+    }
+  }
 }
 
 function addSlide() {
@@ -77,17 +126,52 @@ function move(index: number, direction: -1 | 1) {
   slides.value = next
 }
 
+function fieldFor(slide: Slide, field: keyof SlideLocaleFields): string {
+  if (activeLocale.value === 'fr') return slide[field]
+  return slide.translations[activeLocale.value][field]
+}
+
+function setFieldFor(slide: Slide, field: keyof SlideLocaleFields, value: string) {
+  if (activeLocale.value === 'fr') {
+    slide[field] = value
+  } else {
+    slide.translations[activeLocale.value][field] = value
+  }
+}
+
+const introBodyForLocale = computed({
+  get: () => introTranslations.value[activeLocale.value] ?? '',
+  set: (value: string) => {
+    introTranslations.value[activeLocale.value] = value
+    if (activeLocale.value === 'fr') introBody.value = value
+  }
+})
+
 async function saveSlides() {
   if (savingSlides.value) return
   if (slides.value.some((s) => !s.title.trim())) {
-    toast.add({ color: 'error', title: 'Chaque slide doit avoir un titre.' })
+    toast.add({ color: 'error', title: 'Chaque slide doit avoir un titre en français.' })
     return
   }
   savingSlides.value = true
   try {
     await api('/admin/homepage/slides', {
       method: 'PUT',
-      body: { slides: slides.value }
+      body: {
+        slides: slides.value.map((s) => ({
+          eyebrow: s.eyebrow || null,
+          title: s.title,
+          body: s.body || null,
+          ctaLabel: s.ctaLabel || null,
+          ctaUrl: s.ctaUrl || null,
+          imageUrl: s.imageUrl || null,
+          isActive: s.isActive,
+          translations: {
+            en: s.translations.en,
+            ar: s.translations.ar
+          }
+        }))
+      }
     })
     toast.add({ color: 'success', title: 'Carrousel enregistré.' })
     refresh()
@@ -102,7 +186,16 @@ async function saveIntro() {
   if (savingIntro.value) return
   savingIntro.value = true
   try {
-    await api('/admin/homepage/intro', { method: 'PATCH', body: { body: introBody.value } })
+    await api('/admin/homepage/intro', {
+      method: 'PATCH',
+      body: {
+        body: introTranslations.value.fr || introBody.value,
+        translations: {
+          en: introTranslations.value.en || '',
+          ar: introTranslations.value.ar || ''
+        }
+      }
+    })
     toast.add({ color: 'success', title: 'Texte de présentation enregistré.' })
   } catch (err) {
     toast.add({ color: 'error', title: extractMessage(err, 'Erreur lors de l\'enregistrement.') })
@@ -125,12 +218,25 @@ function extractMessage(err: unknown, fallback: string) {
   <UDashboardNavbar title="Carrousel d'accueil" />
   <div class="flex flex-col gap-4 sm:gap-6 flex-1 overflow-y-auto p-4 sm:p-6">
     <div class="space-y-6 max-w-4xl">
+      <UAlert
+        color="primary"
+        variant="subtle"
+        icon="i-lucide-languages"
+        title="Édition multilingue"
+        description="Choisissez la langue à éditer. Le français est la version par défaut, l'anglais et l'arabe sont des traductions optionnelles servies selon la langue du visiteur."
+      />
+
+      <UTabs
+        v-model="activeLocale"
+        :items="LOCALES.map((l) => ({ label: l.label, value: l.value }))"
+      />
+
       <UCard>
         <template #header>
           <div class="flex items-center justify-between gap-3">
             <div>
               <h2 class="font-semibold">Slides du carrousel</h2>
-              <p class="text-sm text-muted">3 slides maximum. Glissez les flèches pour réordonner.</p>
+              <p class="text-sm text-muted">3 slides maximum. Réordonnez avec les flèches.</p>
             </div>
             <UButton
               icon="i-lucide-plus"
@@ -162,19 +268,22 @@ function extractMessage(err: unknown, fallback: string) {
 
             <div class="grid gap-3 md:grid-cols-2">
               <UFormField label="Eyebrow">
-                <UInput v-model="slide.eyebrow" class="w-full" />
+                <UInput :model-value="fieldFor(slide, 'eyebrow')" class="w-full" @update:model-value="(v: string) => setFieldFor(slide, 'eyebrow', v)" />
               </UFormField>
-              <UFormField label="Titre" required>
-                <UInput v-model="slide.title" class="w-full" />
+              <UFormField :label="activeLocale === 'fr' ? 'Titre' : 'Titre (' + activeLocale + ')'" :required="activeLocale === 'fr'">
+                <UInput :model-value="fieldFor(slide, 'title')" class="w-full" @update:model-value="(v: string) => setFieldFor(slide, 'title', v)" />
               </UFormField>
             </div>
             <UFormField label="Corps">
-              <UTextarea v-model="slide.body" :rows="2" class="w-full" />
+              <UTextarea :model-value="fieldFor(slide, 'body')" :rows="2" class="w-full" @update:model-value="(v: string) => setFieldFor(slide, 'body', v)" />
             </UFormField>
-            <div class="grid gap-3 md:grid-cols-3">
-              <UFormField label="Texte du bouton">
-                <UInput v-model="slide.ctaLabel" class="w-full" />
-              </UFormField>
+            <UFormField label="Texte du bouton">
+              <UInput :model-value="fieldFor(slide, 'ctaLabel')" class="w-full" @update:model-value="(v: string) => setFieldFor(slide, 'ctaLabel', v)" />
+            </UFormField>
+
+            <USeparator label="Configuration partagée (toutes langues)" />
+
+            <div class="grid gap-3 md:grid-cols-2">
               <UFormField label="Lien">
                 <UInput v-model="slide.ctaUrl" class="w-full" placeholder="/categories/xxx" />
               </UFormField>
@@ -199,11 +308,11 @@ function extractMessage(err: unknown, fallback: string) {
         <template #header>
           <div>
             <h2 class="font-semibold">Texte de présentation</h2>
-            <p class="text-sm text-muted">Affiché sous le carrousel. Mise en forme : gras, italique, lien, couleurs.</p>
+            <p class="text-sm text-muted">Affiché sous le carrousel. Édité dans la langue active : <strong>{{ activeLocale }}</strong>.</p>
           </div>
         </template>
         <ClientOnly>
-          <RichTextEditor v-model="introBody" />
+          <RichTextEditor v-model="introBodyForLocale" />
           <template #fallback>
             <div class="border border-default rounded-lg p-3 min-h-32 text-sm text-muted">Chargement de l'éditeur…</div>
           </template>
