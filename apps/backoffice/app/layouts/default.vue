@@ -10,6 +10,7 @@ const navItems = [
   { label: 'Carrousel', icon: 'i-lucide-images', to: '/homepage' },
   { label: 'Commandes', icon: 'i-lucide-shopping-bag', to: '/orders' },
   { label: 'Factures', icon: 'i-lucide-file-text', to: '/invoices' },
+  { label: 'Messages', icon: 'i-lucide-message-circle', to: '/messages' },
   { label: 'Utilisateurs', icon: 'i-lucide-users', to: '/users' },
   { label: 'Sécurité', icon: 'i-lucide-shield-check', to: '/security' }
 ]

@@ -111,6 +111,40 @@ export interface AdminUserDetail {
   totalRevenue: number
 }
 
+export interface AdminContactMessage {
+  id: number
+  userId: number | null
+  name: string
+  email: string
+  subject: string
+  message: string
+  isRead: boolean
+  createdAt: string
+}
+
+export interface AdminChatbotSession {
+  id: number
+  userId: number | null
+  visitorName: string | null
+  visitorEmail: string | null
+  subject: string | null
+  escalated: boolean
+  escalatedAt: string | null
+  isRead: boolean
+  createdAt: string
+  identity?: string
+  user?: { id: number, email: string, fullName: string | null } | null
+}
+
+export interface AdminChatbotMessage {
+  id: number
+  sessionId: number
+  role: 'user' | 'bot' | 'agent'
+  content: string
+  intent: string | null
+  createdAt: string
+}
+
 export interface AdminInvoice {
   id: number
   invoiceNumber: string
