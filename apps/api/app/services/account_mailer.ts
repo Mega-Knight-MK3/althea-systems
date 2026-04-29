@@ -8,7 +8,7 @@ function buildLink(path: string, token: string) {
   return `${base}${path}?token=${encodeURIComponent(token)}`
 }
 
-async function deliver(payload: { to: string; subject: string; html: string; link: string }) {
+async function deliver(payload: { to: string; subject: string; html: string; link?: string }) {
   if (env.get('MAIL_DRIVER', 'log') === 'log') {
     logger.info({ to: payload.to, subject: payload.subject, link: payload.link }, 'mail.log')
     return
@@ -20,6 +20,24 @@ async function deliver(payload: { to: string; subject: string; html: string; lin
   } catch (err) {
     logger.error({ err, to: payload.to, subject: payload.subject, link: payload.link }, 'mail.send.failed')
   }
+}
+
+export async function sendInvoiceCopy(user: User, invoiceNumber: string) {
+  await deliver({
+    to: user.email,
+    subject: `Votre facture ${invoiceNumber}`,
+    html: `<p>Bonjour ${user.fullName ?? ''},</p>
+      <p>Votre facture ${invoiceNumber} est disponible dans votre espace client.</p>`,
+  })
+}
+
+export async function sendCreditNoteCopy(user: User, creditNoteNumber: string) {
+  await deliver({
+    to: user.email,
+    subject: `Avoir ${creditNoteNumber}`,
+    html: `<p>Bonjour ${user.fullName ?? ''},</p>
+      <p>Un avoir ${creditNoteNumber} a été émis sur votre compte. Vous pouvez le consulter dans votre espace client.</p>`,
+  })
 }
 
 export async function sendEmailVerification(user: User, token: string, email: string) {
