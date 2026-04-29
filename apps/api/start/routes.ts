@@ -15,6 +15,7 @@ const CategoriesController = () => import('#controllers/categories_controller')
 const AdminCategoriesController = () => import('#controllers/admin_categories_controller')
 const ProductImagesController = () => import('#controllers/product_images_controller')
 const SiteConfigController = () => import('#controllers/site_config_controller')
+const ContactController = () => import('#controllers/contact_controller')
 const AdminHomepageController = () => import('#controllers/admin_homepage_controller')
 const AdminUsersController = () => import('#controllers/admin_users_controller')
 const AdminOrdersController = () => import('#controllers/admin_orders_controller')
@@ -23,6 +24,8 @@ const AdminInvoicesController = () => import('#controllers/admin_invoices_contro
 router.get('/', async () => ({ hello: 'world' }))
 
 router.get('/site-config/homepage', [SiteConfigController, 'homepage'])
+
+router.post('/contact', [ContactController, 'store'])
 
 router
   .group(() => {
