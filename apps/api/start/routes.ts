@@ -17,6 +17,7 @@ const ProductImagesController = () => import('#controllers/product_images_contro
 const SiteConfigController = () => import('#controllers/site_config_controller')
 const AdminHomepageController = () => import('#controllers/admin_homepage_controller')
 const AdminUsersController = () => import('#controllers/admin_users_controller')
+const AdminOrdersController = () => import('#controllers/admin_orders_controller')
 
 router.get('/', async () => ({ hello: 'world' }))
 
@@ -100,6 +101,15 @@ router
     router.patch('intro', [AdminHomepageController, 'updateIntro'])
   })
   .prefix('/admin/homepage')
+  .use([middleware.auth(), middleware.admin()])
+
+router
+  .group(() => {
+    router.get('/', [AdminOrdersController, 'index'])
+    router.get(':id', [AdminOrdersController, 'show'])
+    router.patch(':id/status', [AdminOrdersController, 'updateStatus'])
+  })
+  .prefix('/admin/orders')
   .use([middleware.auth(), middleware.admin()])
 
 router
