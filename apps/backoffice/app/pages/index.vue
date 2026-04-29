@@ -114,6 +114,15 @@ const statusColor: Record<string, 'primary' | 'success' | 'warning' | 'error' | 
         </UCard>
       </section>
 
+      <ClientOnly>
+        <SalesCharts />
+        <template #fallback>
+          <UCard>
+            <USkeleton class="h-64" />
+          </UCard>
+        </template>
+      </ClientOnly>
+
       <section class="grid gap-4 lg:grid-cols-3">
         <UCard class="lg:col-span-2">
           <template #header>
