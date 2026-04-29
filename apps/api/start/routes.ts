@@ -85,6 +85,7 @@ router
 router
   .group(() => {
     router.get('stats', [AdminDashboardController, 'stats'])
+    router.get('sales', [AdminDashboardController, 'sales'])
   })
   .prefix('/admin/dashboard')
   .use([middleware.auth(), middleware.admin()])
