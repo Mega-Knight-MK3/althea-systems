@@ -25,6 +25,9 @@ export default class Category extends BaseModel {
   @column()
   declare position: number
 
+  @column()
+  declare isActive: boolean
+
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
 

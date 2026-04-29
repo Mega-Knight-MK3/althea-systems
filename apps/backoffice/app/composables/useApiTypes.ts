@@ -17,8 +17,12 @@ export interface AdminCategory {
   id: number
   name: string
   slug: string
+  description: string | null
   parentId: number | null
+  imagePath: string | null
   position: number
+  isActive: boolean
+  productCount?: number
 }
 
 export interface AdminProduct {

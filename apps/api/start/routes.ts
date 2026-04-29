@@ -12,6 +12,7 @@ const OrdersController = () => import('#controllers/orders_controller')
 const CheckoutController = () => import('#controllers/checkout_controller')
 const ProductsController = () => import('#controllers/products_controller')
 const CategoriesController = () => import('#controllers/categories_controller')
+const AdminCategoriesController = () => import('#controllers/admin_categories_controller')
 const ProductImagesController = () => import('#controllers/product_images_controller')
 const SiteConfigController = () => import('#controllers/site_config_controller')
 
@@ -106,7 +107,10 @@ router
 
 router
   .group(() => {
+    router.get('/', [AdminCategoriesController, 'index'])
     router.post('/', [CategoriesController, 'store'])
+    router.post('reorder', [AdminCategoriesController, 'reorder'])
+    router.post('bulk-status', [AdminCategoriesController, 'bulkStatus'])
     router.patch(':id', [CategoriesController, 'update'])
     router.delete(':id', [CategoriesController, 'destroy'])
   })
