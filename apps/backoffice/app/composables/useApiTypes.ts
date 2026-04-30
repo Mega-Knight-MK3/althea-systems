@@ -1,3 +1,12 @@
+export type LocaleCode = 'fr' | 'en' | 'ar'
+
+export interface NamedTranslation {
+  name?: string | null
+  description?: string | null
+}
+
+export type NamedTranslations = Partial<Record<LocaleCode, NamedTranslation>>
+
 export interface Paginated<T> {
   meta: {
     total: number
@@ -23,6 +32,7 @@ export interface AdminCategory {
   position: number
   isActive: boolean
   productCount?: number
+  translations?: NamedTranslations | null
 }
 
 export interface AdminUser {
@@ -185,4 +195,5 @@ export interface AdminProduct {
   sortPriority: number
   createdAt: string
   updatedAt: string | null
+  translations?: NamedTranslations | null
 }

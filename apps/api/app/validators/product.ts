@@ -9,6 +9,11 @@ const slug = vine
 
 const vatRate = vine.number().min(0).max(50)
 
+const namedTranslation = vine.object({
+  name: vine.string().trim().maxLength(255).nullable().optional(),
+  description: vine.string().trim().maxLength(8000).nullable().optional(),
+})
+
 export const createProductValidator = vine.compile(
   vine.object({
     name: vine.string().trim().minLength(2).maxLength(255),
@@ -20,6 +25,7 @@ export const createProductValidator = vine.compile(
     categoryId: vine.number().positive().optional(),
     isActive: vine.boolean().optional(),
     sortPriority: vine.number().withoutDecimals().min(0).optional(),
+    translations: vine.record(namedTranslation).optional(),
   })
 )
 
@@ -44,6 +50,7 @@ export const updateProductValidator = vine.withMetaData<{ productId: number }>()
     categoryId: vine.number().positive().nullable().optional(),
     isActive: vine.boolean().optional(),
     sortPriority: vine.number().withoutDecimals().min(0).optional(),
+    translations: vine.record(namedTranslation).optional(),
   })
 )
 

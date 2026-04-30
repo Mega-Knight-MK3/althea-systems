@@ -7,6 +7,11 @@ const slug = vine
   .maxLength(160)
   .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
 
+const namedTranslation = vine.object({
+  name: vine.string().trim().maxLength(120).nullable().optional(),
+  description: vine.string().trim().maxLength(2000).nullable().optional(),
+})
+
 export const createCategoryValidator = vine.compile(
   vine.object({
     name: vine.string().trim().minLength(2).maxLength(120),
@@ -16,6 +21,7 @@ export const createCategoryValidator = vine.compile(
     imagePath: vine.string().trim().maxLength(255).optional(),
     position: vine.number().withoutDecimals().min(0).optional(),
     isActive: vine.boolean().optional(),
+    translations: vine.record(namedTranslation).optional(),
   })
 )
 
@@ -38,6 +44,7 @@ export const updateCategoryValidator = vine.withMetaData<{ categoryId: number }>
     imagePath: vine.string().trim().maxLength(255).nullable().optional(),
     position: vine.number().withoutDecimals().min(0).optional(),
     isActive: vine.boolean().optional(),
+    translations: vine.record(namedTranslation).optional(),
   })
 )
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { AdminCategory, AdminProduct } from '~/composables/useApiTypes'
+import type { AdminCategory, AdminProduct, LocaleCode, NamedTranslations } from '~/composables/useApiTypes'
 
 interface Props {
   product?: AdminProduct | null
@@ -13,6 +13,19 @@ const api = useApi()
 const router = useRouter()
 const toast = useToast()
 
+const LOCALES: Array<{ value: LocaleCode, label: string }> = [
+  { value: 'fr', label: 'Français (par défaut)' },
+  { value: 'en', label: 'English' },
+  { value: 'ar', label: 'العربية' }
+]
+
+const activeLocale = ref<LocaleCode>('fr')
+
+interface LocaleFields {
+  name: string
+  description: string
+}
+
 interface FormState {
   name: string
   slug: string
@@ -23,7 +36,14 @@ interface FormState {
   categoryId: number | null
   isActive: boolean
   sortPriority: number
+  translations: Record<LocaleCode, LocaleFields>
 }
+
+const initialTranslations = (source?: NamedTranslations | null): Record<LocaleCode, LocaleFields> => ({
+  fr: { name: '', description: '' },
+  en: { name: source?.en?.name ?? '', description: source?.en?.description ?? '' },
+  ar: { name: source?.ar?.name ?? '', description: source?.ar?.description ?? '' }
+})
 
 const state = reactive<FormState>({
   name: props.product?.name ?? '',
@@ -34,7 +54,8 @@ const state = reactive<FormState>({
   stock: props.product?.stock ?? 0,
   categoryId: props.product?.categoryId ?? null,
   isActive: props.product?.isActive ?? false,
-  sortPriority: props.product?.sortPriority ?? 0
+  sortPriority: props.product?.sortPriority ?? 0,
+  translations: initialTranslations(props.product?.translations)
 })
 
 const submitting = ref(false)
@@ -57,12 +78,7 @@ const vatItems = [
 ]
 
 function slugify(value: string) {
-  return value
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '')
+  return value.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
 }
 
 watch(
@@ -73,6 +89,22 @@ watch(
     }
   }
 )
+
+const nameValue = computed({
+  get: () => activeLocale.value === 'fr' ? state.name : state.translations[activeLocale.value].name,
+  set: (value: string) => {
+    if (activeLocale.value === 'fr') state.name = value
+    else state.translations[activeLocale.value].name = value
+  }
+})
+
+const descriptionValue = computed({
+  get: () => activeLocale.value === 'fr' ? state.description : state.translations[activeLocale.value].description,
+  set: (value: string) => {
+    if (activeLocale.value === 'fr') state.description = value
+    else state.translations[activeLocale.value].description = value
+  }
+})
 
 async function submit() {
   if (submitting.value) return
@@ -87,13 +119,14 @@ async function submit() {
       stock: state.stock,
       categoryId: state.categoryId ?? null,
       isActive: state.isActive,
-      sortPriority: state.sortPriority
+      sortPriority: state.sortPriority,
+      translations: {
+        en: { name: state.translations.en.name, description: state.translations.en.description },
+        ar: { name: state.translations.ar.name, description: state.translations.ar.description }
+      }
     }
     if (props.product) {
-      const updated = await api<AdminProduct>(`/admin/products/${props.product.id}`, {
-        method: 'PATCH',
-        body
-      })
+      const updated = await api<AdminProduct>(`/admin/products/${props.product.id}`, { method: 'PATCH', body })
       toast.add({ color: 'success', title: 'Produit mis à jour.' })
       emit('saved', updated)
     } else {
@@ -120,18 +153,22 @@ function extractMessage(err: unknown, fallback: string) {
 
 <template>
   <UForm :state="state" class="space-y-6" @submit.prevent="submit">
+    <UTabs v-model="activeLocale" :items="LOCALES.map((l) => ({ label: l.label, value: l.value }))" />
+
     <div class="grid gap-4 md:grid-cols-2">
-      <UFormField label="Nom" required>
-        <UInput v-model="state.name" class="w-full" />
+      <UFormField :label="activeLocale === 'fr' ? 'Nom' : 'Nom (' + activeLocale + ')'" :required="activeLocale === 'fr'">
+        <UInput v-model="nameValue" class="w-full" />
       </UFormField>
       <UFormField label="Slug" required>
-        <UInput v-model="state.slug" class="w-full" />
+        <UInput v-model="state.slug" :disabled="activeLocale !== 'fr'" class="w-full" />
       </UFormField>
     </div>
 
-    <UFormField label="Description">
-      <UTextarea v-model="state.description" :rows="4" class="w-full" />
+    <UFormField :label="activeLocale === 'fr' ? 'Description' : 'Description (' + activeLocale + ')'">
+      <UTextarea v-model="descriptionValue" :rows="4" class="w-full" />
     </UFormField>
+
+    <USeparator label="Configuration partagée (toutes langues)" />
 
     <div class="grid gap-4 md:grid-cols-3">
       <UFormField label="Prix HT" required>
