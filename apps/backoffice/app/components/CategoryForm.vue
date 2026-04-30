@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { AdminCategory } from '~/composables/useApiTypes'
+import type { AdminCategory, LocaleCode, NamedTranslations } from '~/composables/useApiTypes'
 
 interface Props {
   category?: AdminCategory | null
@@ -13,6 +13,25 @@ const api = useApi()
 const router = useRouter()
 const toast = useToast()
 
+const LOCALES: Array<{ value: LocaleCode, label: string }> = [
+  { value: 'fr', label: 'Français (par défaut)' },
+  { value: 'en', label: 'English' },
+  { value: 'ar', label: 'العربية' }
+]
+
+const activeLocale = ref<LocaleCode>('fr')
+
+interface LocaleFields {
+  name: string
+  description: string
+}
+
+const initialTranslations = (source?: NamedTranslations | null): Record<LocaleCode, LocaleFields> => ({
+  fr: { name: '', description: '' },
+  en: { name: source?.en?.name ?? '', description: source?.en?.description ?? '' },
+  ar: { name: source?.ar?.name ?? '', description: source?.ar?.description ?? '' }
+})
+
 const state = reactive({
   name: props.category?.name ?? '',
   slug: props.category?.slug ?? '',
@@ -20,7 +39,8 @@ const state = reactive({
   parentId: props.category?.parentId ?? null as number | null,
   imagePath: props.category?.imagePath ?? '',
   position: props.category?.position ?? 0,
-  isActive: props.category?.isActive ?? true
+  isActive: props.category?.isActive ?? true,
+  translations: initialTranslations(props.category?.translations)
 })
 const submitting = ref(false)
 
@@ -44,6 +64,22 @@ watch(
   }
 )
 
+const nameValue = computed({
+  get: () => activeLocale.value === 'fr' ? state.name : state.translations[activeLocale.value].name,
+  set: (value: string) => {
+    if (activeLocale.value === 'fr') state.name = value
+    else state.translations[activeLocale.value].name = value
+  }
+})
+
+const descriptionValue = computed({
+  get: () => activeLocale.value === 'fr' ? state.description : state.translations[activeLocale.value].description,
+  set: (value: string) => {
+    if (activeLocale.value === 'fr') state.description = value
+    else state.translations[activeLocale.value].description = value
+  }
+})
+
 async function submit() {
   if (submitting.value) return
   submitting.value = true
@@ -55,7 +91,11 @@ async function submit() {
       parentId: state.parentId ?? null,
       imagePath: state.imagePath || null,
       position: state.position,
-      isActive: state.isActive
+      isActive: state.isActive,
+      translations: {
+        en: { name: state.translations.en.name, description: state.translations.en.description },
+        ar: { name: state.translations.ar.name, description: state.translations.ar.description }
+      }
     }
     if (props.category) {
       const updated = await api<AdminCategory>(`/admin/categories/${props.category.id}`, { method: 'PATCH', body })
@@ -85,17 +125,22 @@ function extractMessage(err: unknown, fallback: string) {
 
 <template>
   <UForm :state="state" class="space-y-6" @submit.prevent="submit">
+    <UTabs v-model="activeLocale" :items="LOCALES.map((l) => ({ label: l.label, value: l.value }))" />
+
     <div class="grid gap-4 md:grid-cols-2">
-      <UFormField label="Nom" required>
-        <UInput v-model="state.name" class="w-full" />
+      <UFormField :label="activeLocale === 'fr' ? 'Nom' : 'Nom (' + activeLocale + ')'" :required="activeLocale === 'fr'">
+        <UInput v-model="nameValue" class="w-full" />
       </UFormField>
       <UFormField label="Slug" required>
-        <UInput v-model="state.slug" class="w-full" />
+        <UInput v-model="state.slug" :disabled="activeLocale !== 'fr'" class="w-full" />
       </UFormField>
     </div>
-    <UFormField label="Description">
-      <UTextarea v-model="state.description" :rows="3" class="w-full" />
+    <UFormField :label="activeLocale === 'fr' ? 'Description' : 'Description (' + activeLocale + ')'">
+      <UTextarea v-model="descriptionValue" :rows="3" class="w-full" />
     </UFormField>
+
+    <USeparator label="Configuration partagée (toutes langues)" />
+
     <div class="grid gap-4 md:grid-cols-3">
       <UFormField label="Catégorie parente">
         <USelect v-model="state.parentId" :items="parentItems" class="w-full" />

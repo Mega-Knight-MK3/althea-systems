@@ -2,6 +2,7 @@ import { DateTime } from 'luxon'
 import { BaseModel, belongsTo, column } from '@adonisjs/lucid/orm'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
 import Category from '#models/category'
+import type { NamedTranslations } from '#services/locale'
 
 export default class Product extends BaseModel {
   @column({ isPrimary: true })
@@ -35,6 +36,15 @@ export default class Product extends BaseModel {
 
   @column()
   declare sortPriority: number
+
+  @column({
+    prepare: (value: NamedTranslations | null) => JSON.stringify(value ?? {}),
+    consume: (value: string | object | null) => {
+      if (!value) return {}
+      return typeof value === 'string' ? JSON.parse(value) : value
+    },
+  })
+  declare translations: NamedTranslations
 
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
