@@ -1,5 +1,8 @@
 export default defineNuxtPlugin((nuxtApp) => {
-  const i18n = nuxtApp.$i18n as { locale: { value: string }, locales: { value: Array<{ code: string, dir?: string }> } }
+  const i18n = nuxtApp.$i18n as {
+    locale: { value: string }
+    locales: { value: Array<{ code: string, dir?: string }> }
+  }
 
   const apply = (code: string) => {
     const meta = i18n.locales.value.find((l) => l.code === code)
@@ -9,5 +12,11 @@ export default defineNuxtPlugin((nuxtApp) => {
   }
 
   apply(i18n.locale.value)
-  watch(() => i18n.locale.value, (next) => apply(next))
+  watch(
+    () => i18n.locale.value,
+    async (next) => {
+      apply(next)
+      await refreshNuxtData()
+    }
+  )
 })
