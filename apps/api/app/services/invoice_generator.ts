@@ -28,10 +28,7 @@ export async function generateInvoicePdf(order: Order, invoiceNumber: string): P
     doc.moveDown(2)
 
     doc.fontSize(16).fillColor('#0f172a').text(`Facture ${invoiceNumber}`)
-    doc
-      .fontSize(10)
-      .fillColor('#475569')
-      .text(`Date : ${order.placedAt.toFormat('dd/MM/yyyy')}`)
+    doc.fontSize(10).fillColor('#475569').text(`Date : ${new Date().toLocaleDateString('fr-FR')}`)
     doc.moveDown()
 
     doc.fontSize(11).fillColor('#0f172a').text('Facturé à')

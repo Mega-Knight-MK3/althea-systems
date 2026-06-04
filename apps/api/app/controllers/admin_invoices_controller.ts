@@ -74,26 +74,12 @@ export default class AdminInvoicesController {
 
   async downloadInvoice({ params, response }: HttpContext) {
     const invoice = await Invoice.findOrFail(params.id)
-
-    // Admin downloads the detailed administrative invoice
-    const pdfPath = invoice.adminPdfPath || invoice.pdfPath
-    if (!pdfPath) {
+    if (!invoice.pdfPath) {
       return response.notFound({ message: 'PDF indisponible.' })
     }
-
-    // Verify file exists before streaming
-    try {
-      await fs.access(pdfPath, fs.constants.R_OK)
-    } catch {
-      return response.notFound({ message: 'Le fichier PDF est introuvable.' })
-    }
-
     response.header('Content-Type', 'application/pdf')
-    response.header(
-      'Content-Disposition',
-      `attachment; filename="${invoice.invoiceNumber}-admin.pdf"`
-    )
-    return response.stream(createReadStream(pdfPath))
+    response.header('Content-Disposition', `attachment; filename="${invoice.invoiceNumber}.pdf"`)
+    return response.stream(createReadStream(invoice.pdfPath))
   }
 
   async resendInvoice({ params, response }: HttpContext) {

@@ -32,14 +32,4 @@ export default await Env.create(new URL('../', import.meta.url), {
   ADMIN_FULL_NAME: Env.schema.string.optional(),
 
   TOTP_ISSUER: Env.schema.string.optional(),
-
-  // Company legal information for invoices
-  COMPANY_SIRET: Env.schema.string.optional(),
-  COMPANY_VAT: Env.schema.string.optional(),
-  COMPANY_RCS: Env.schema.string.optional(),
-  COMPANY_CAPITAL: Env.schema.string.optional(),
-  COMPANY_PAYMENT_DAYS: Env.schema.number.optional(),
-  COMPANY_EARLY_PAYMENT_DISCOUNT: Env.schema.number.optional(),
-  COMPANY_BANK_IBAN: Env.schema.string.optional(),
-  COMPANY_BANK_BIC: Env.schema.string.optional(),
 })
