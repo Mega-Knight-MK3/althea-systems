@@ -1,6 +1,6 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import { DateTime } from 'luxon'
-import { errors } from '@adonisjs/core'
+import { Exception } from '@adonisjs/core/exceptions'
 import ContactMessage from '#models/contact_message'
 import ChatbotSession from '#models/chatbot_session'
 import ChatbotMessage from '#models/chatbot_message'
@@ -115,7 +115,10 @@ export default class AdminMessagesController {
       .firstOrFail()
 
     if (session.operatorId && session.isActive) {
-      throw new errors.E_BAD_REQUEST('Session already taken by another operator')
+      throw new Exception('Session already taken by another operator', {
+        code: 'E_BAD_REQUEST',
+        status: 400,
+      })
     }
 
     const operator = auth.user!

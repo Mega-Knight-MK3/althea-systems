@@ -296,7 +296,7 @@ function extractMessage(err: unknown, fallback: string) {
                 v-if="selectedChat?.operatorId"
                 @click="handbackFromMessages"
                 size="sm"
-                color="gray"
+                color="neutral"
               >
                 Rendre au bot
               </UButton>

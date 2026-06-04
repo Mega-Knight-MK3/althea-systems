@@ -18,7 +18,7 @@
             <p class="text-sm text-gray-600">{{ session.subject || 'Conversation chatbot' }}</p>
             <div class="mt-2 flex gap-2">
               <UBadge v-if="session.escalated" color="warning" size="xs">Escalated</UBadge>
-              <UBadge v-if="session.operatorId" color="green" size="xs">Taken</UBadge>
+              <UBadge v-if="session.operatorId" color="success" size="xs">Taken</UBadge>
               <UBadge v-if="!session.isRead" color="primary" size="xs">Unread</UBadge>
             </div>
           </li>
@@ -46,7 +46,7 @@
             v-if="selectedSession.operatorId === user?.id"
             @click="handback"
             :loading="handingBack"
-            color="gray"
+            color="neutral"
           >
             Hand Back to Bot
           </UButton>
@@ -57,7 +57,7 @@
         <div v-for="msg in transcript" :key="msg.id" class="mb-4 flex" :class="msg.role === 'user' ? 'justify-end' : 'justify-start'">
           <div class="max-w-xs">
             <div class="mb-1 flex items-center gap-2 text-xs text-gray-500">
-              <UBadge :color="msg.role === 'user' ? 'blue' : msg.role === 'agent' ? 'green' : 'gray'" size="xs">
+              <UBadge :color="msg.role === 'user' ? 'info' : msg.role === 'agent' ? 'success' : 'neutral'" size="xs">
                 {{ msg.role === 'user' ? 'Customer' : msg.role === 'agent' ? 'Agent' : 'Bot' }}
               </UBadge>
               <span>{{ formatDateTime(msg.createdAt) }}</span>
@@ -102,10 +102,6 @@
 </template>
 
 <script setup lang="ts">
-definePageMeta({
-  middleware: ['admin-auth']
-})
-
 const api = useApi()
 const { user } = useAdminAuth()
 const transmit = useChatbotTransmit()
