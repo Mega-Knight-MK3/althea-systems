@@ -4,7 +4,9 @@ import env from '#start/env'
 import logger from '@adonisjs/core/services/logger'
 import { stripeClient } from '#services/stripe_service'
 import Order from '#models/order'
+import CreditNote from '#models/credit_note'
 import { DateTime } from 'luxon'
+import { createAutoCreditNote } from '#services/credit_note_service'
 
 export default class StripeWebhooksController {
   async handle({ request, response }: HttpContext) {
@@ -141,10 +143,43 @@ export default class StripeWebhooksController {
         .where('stripePaymentIntentId', String(charge.payment_intent))
         .first()
 
-      if (order && order.status !== 'refunded') {
-        order.status = 'refunded'
-        await order.save()
-        logger.info({ orderId: order.id }, 'Order marked as refunded from webhook')
+      if (order) {
+        // Check if credit note already exists for this refund
+        await order.load('invoice')
+        if (order.invoice) {
+          const existingCreditNote = await CreditNote.query()
+            .where('invoiceId', order.invoice.id)
+            .where('stripeRefundId', charge.refund as string)
+            .first()
+
+          if (!existingCreditNote) {
+            // Automatically create credit note for the refund
+            try {
+              const refundAmount = charge.amount_refunded / 100 // Convert from cents to euros
+              await createAutoCreditNote(order, {
+                reason: 'Remboursement Stripe',
+                amount: refundAmount,
+                stripeRefundId: charge.refund as string,
+                refundMethod: 'stripe',
+              })
+              logger.info(
+                { orderId: order.id, refundAmount },
+                'Automatic credit note created for Stripe refund'
+              )
+            } catch (err) {
+              logger.error(
+                { err, orderId: order.id },
+                'Failed to create automatic credit note for refund'
+              )
+            }
+          }
+        }
+
+        if (order.status !== 'refunded') {
+          order.status = 'refunded'
+          await order.save()
+          logger.info({ orderId: order.id }, 'Order marked as refunded from webhook')
+        }
       }
     }
   }

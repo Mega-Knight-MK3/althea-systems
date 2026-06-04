@@ -14,6 +14,7 @@ import { stripeClient, toMinorUnits } from '#services/stripe_service'
 import { generateInvoicePdf } from '#services/invoice_generator'
 import { generateAdminInvoicePdf } from '#services/invoice_admin_generator'
 import { sendInvoiceCopy } from '#services/account_mailer'
+import { canAutoCancelOrder, autoCancelOrder } from '#services/credit_note_service'
 import logger from '@adonisjs/core/services/logger'
 
 export default class OrdersController {
@@ -233,5 +234,44 @@ export default class OrdersController {
       `attachment; filename="${order.invoice.invoiceNumber}.pdf"`
     )
     return response.stream(createReadStream(order.invoice.pdfPath))
+  }
+
+  /**
+   * Cancel an order and automatically create a credit note with Stripe refund.
+   * Only available for orders less than 24 hours old with status 'paid' or 'processing'.
+   */
+  async cancel({ auth, params, response }: HttpContext) {
+    const user = auth.getUserOrFail()
+    const order = await Order.query()
+      .where('id', params.id)
+      .where('userId', user.id)
+      .firstOrFail()
+
+    if (!canAutoCancelOrder(order)) {
+      return response.badRequest({
+        message:
+          'Cette commande ne peut plus être annulée automatiquement. ' +
+          'Veuillez contacter le service client pour une annulation.',
+      })
+    }
+
+    try {
+      const creditNote = await autoCancelOrder(order, 'Annulation client')
+
+      return response.ok({
+        message: 'Commande annulée avec succès. Un remboursement a été émis.',
+        order: await Order.query()
+          .where('id', order.id)
+          .preload('invoice')
+          .preload('items')
+          .firstOrFail(),
+        creditNote: creditNote.serialize(),
+      })
+    } catch (err) {
+      logger.error({ err, orderId: order.id }, 'Failed to cancel order')
+      return response.internalServerError({
+        message: "Une erreur est survenue lors de l'annulation de la commande.",
+      })
+    }
   }
 }

@@ -29,7 +29,10 @@ export async function generateCreditNotePdf(
     doc.moveDown(2)
 
     doc.fontSize(16).fillColor('#0f172a').text(`Avoir ${creditNote.creditNoteNumber}`)
-    doc.fontSize(10).fillColor('#475569').text(`Date : ${new Date().toLocaleDateString('fr-FR')}`)
+    doc
+      .fontSize(10)
+      .fillColor('#475569')
+      .text(`Date : ${creditNote.issuedAt.toFormat('dd/MM/yyyy')}`)
     doc.text(`Facture liée : ${invoice.invoiceNumber}`)
     doc.moveDown()
 
@@ -43,7 +46,32 @@ export async function generateCreditNotePdf(
       doc.moveDown()
     }
 
-    doc.fontSize(12).fillColor('#0f172a').text(`Montant : ${formatPrice(creditNote.amount)}`, { align: 'right' })
+    // Refund information
+    doc.fontSize(11).fillColor('#0f172a').text('Méthode de remboursement')
+    doc.fontSize(10).fillColor('#475569')
+    const refundMethodLabels = {
+      stripe: 'Carte bancaire (Stripe)',
+      manual: 'Manuel',
+      bank_transfer: 'Virement bancaire',
+    }
+    doc.text(refundMethodLabels[creditNote.refundMethod])
+
+    if (creditNote.stripeRefundId) {
+      doc.text(`Référence : ${creditNote.stripeRefundId}`)
+    }
+
+    const statusLabels = {
+      pending: 'En attente',
+      completed: 'Effectué',
+      failed: 'Échoué',
+    }
+    doc.text(`Statut : ${statusLabels[creditNote.refundStatus]}`)
+    doc.moveDown()
+
+    doc
+      .fontSize(12)
+      .fillColor('#0f172a')
+      .text(`Montant : ${formatPrice(creditNote.amount)}`, { align: 'right' })
     doc.end()
   })
 

@@ -22,6 +22,15 @@ export default class CreditNote extends BaseModel {
   @column()
   declare pdfPath: string | null
 
+  @column()
+  declare stripeRefundId: string | null
+
+  @column()
+  declare refundStatus: 'pending' | 'completed' | 'failed'
+
+  @column()
+  declare refundMethod: 'stripe' | 'manual' | 'bank_transfer'
+
   @column.dateTime()
   declare issuedAt: DateTime
 

@@ -118,6 +118,7 @@ router
     router.get('orders/:id', [OrdersController, 'show'])
     router.post('orders', [OrdersController, 'store'])
     router.get('orders/:id/invoice', [OrdersController, 'downloadInvoice'])
+    router.post('orders/:id/cancel', [OrdersController, 'cancel'])
   })
   .prefix('/account')
   .use(middleware.auth())
