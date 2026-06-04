@@ -32,4 +32,16 @@ export default await Env.create(new URL('../', import.meta.url), {
   ADMIN_FULL_NAME: Env.schema.string.optional(),
 
   TOTP_ISSUER: Env.schema.string.optional(),
+
+  // Company information for invoices
+  COMPANY_ADDRESS: Env.schema.string.optional(),
+  COMPANY_CITY: Env.schema.string.optional(),
+  COMPANY_COUNTRY: Env.schema.string.optional(),
+  COMPANY_PHONE: Env.schema.string.optional(),
+  COMPANY_EMAIL: Env.schema.string.optional({ format: 'email' }),
+  COMPANY_SIRET: Env.schema.string.optional(),
+  COMPANY_VAT: Env.schema.string.optional(),
+  COMPANY_PAYMENT_DAYS: Env.schema.number.optional(),
+  COMPANY_BANK_IBAN: Env.schema.string.optional(),
+  COMPANY_BANK_BIC: Env.schema.string.optional(),
 })
