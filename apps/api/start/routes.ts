@@ -180,6 +180,8 @@ router
     router.get('chatbot/sessions', [AdminMessagesController, 'indexChat'])
     router.get('chatbot/sessions/:id', [AdminMessagesController, 'showChat'])
     router.post('chatbot/sessions/:id/reply', [AdminMessagesController, 'replyChat'])
+    router.post('chatbot/sessions/:id/takeover', [AdminMessagesController, 'takeoverSession'])
+    router.post('chatbot/sessions/:id/handback', [AdminMessagesController, 'handbackSession'])
   })
   .prefix('/admin')
   .use([middleware.auth(), middleware.admin()])

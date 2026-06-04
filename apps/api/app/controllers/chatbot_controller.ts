@@ -8,6 +8,7 @@ import {
   startSessionValidator,
 } from '#validators/chatbot'
 import { FAQ_SHORTCUTS, reply, welcomeMessage } from '#services/chatbot_brain'
+import { broadcastNewMessage, notifyEscalation } from '#services/chatbot_transmit'
 
 export default class ChatbotController {
   async start({ auth, request, response }: HttpContext) {
@@ -47,6 +48,10 @@ export default class ChatbotController {
 
     const messages = [userMessage]
 
+    if (session.isOperatorControlled) {
+      return response.created({ messages })
+    }
+
     if (session.escalated) {
       return response.created({ messages })
     }
@@ -59,6 +64,8 @@ export default class ChatbotController {
       intent: brain.intent,
     })
     messages.push(botMessage)
+
+    await broadcastNewMessage(session.id, botMessage)
 
     if (brain.shouldEscalate && !session.escalated) {
       session.escalated = true
@@ -83,6 +90,8 @@ export default class ChatbotController {
       isRead: false,
     })
     await session.save()
+
+    await notifyEscalation(session)
 
     const note = await ChatbotMessage.create({
       sessionId: session.id,

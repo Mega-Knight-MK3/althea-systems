@@ -129,6 +129,36 @@ const roleLabel: Record<string, string> = {
   agent: 'Conseiller'
 }
 
+async function takeoverFromMessages() {
+  if (!selectedChat.value) return
+  try {
+    const response = await api<{ session: AdminChatbotSession }>(
+      `/admin/chatbot/sessions/${selectedChat.value.id}/takeover`,
+      { method: 'POST' }
+    )
+    selectedChat.value = response.session
+    toast.add({ color: 'success', title: 'Session prise en charge' })
+    refreshChats()
+  } catch (err) {
+    toast.add({ color: 'error', title: extractMessage(err, 'Impossible de prendre en charge') })
+  }
+}
+
+async function handbackFromMessages() {
+  if (!selectedChat.value) return
+  try {
+    const response = await api<{ session: AdminChatbotSession }>(
+      `/admin/chatbot/sessions/${selectedChat.value.id}/handback`,
+      { method: 'POST' }
+    )
+    selectedChat.value = response.session
+    toast.add({ color: 'success', title: 'Rendu au bot' })
+    refreshChats()
+  } catch (err) {
+    toast.add({ color: 'error', title: extractMessage(err, 'Impossible de rendre au bot') })
+  }
+}
+
 function extractMessage(err: unknown, fallback: string) {
   if (err && typeof err === 'object' && 'data' in err) {
     const data = (err as { data?: { message?: string } }).data
@@ -252,6 +282,24 @@ function extractMessage(err: unknown, fallback: string) {
             <div class="mt-2 flex items-center gap-2">
               <UBadge v-if="selectedChat?.escalated" color="warning" variant="subtle">Escaladée</UBadge>
               <UBadge v-if="selectedChat?.visitorEmail" color="primary" variant="subtle">{{ selectedChat.visitorEmail }}</UBadge>
+            </div>
+            <div class="mt-3 flex gap-2">
+              <UButton
+                v-if="selectedChat && !selectedChat.operatorId"
+                @click="takeoverFromMessages"
+                size="sm"
+                color="primary"
+              >
+                Prendre en charge
+              </UButton>
+              <UButton
+                v-if="selectedChat?.operatorId"
+                @click="handbackFromMessages"
+                size="sm"
+                color="neutral"
+              >
+                Rendre au bot
+              </UButton>
             </div>
           </div>
           <div class="flex-1 overflow-y-auto p-4 space-y-3">
