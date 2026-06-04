@@ -12,6 +12,9 @@ export default class ChatbotSession extends BaseModel {
   declare userId: number | null
 
   @column()
+  declare operatorId: number | null
+
+  @column()
   declare visitorName: string | null
 
   @column()
@@ -26,8 +29,14 @@ export default class ChatbotSession extends BaseModel {
   @column.dateTime()
   declare escalatedAt: DateTime | null
 
+  @column.dateTime()
+  declare takenOverAt: DateTime | null
+
   @column()
   declare isRead: boolean
+
+  @column()
+  declare isActive: boolean
 
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
@@ -38,6 +47,13 @@ export default class ChatbotSession extends BaseModel {
   @belongsTo(() => User)
   declare user: BelongsTo<typeof User>
 
+  @belongsTo(() => User, { foreignKey: 'operatorId' })
+  declare operator: BelongsTo<typeof User>
+
   @hasMany(() => ChatbotMessage, { foreignKey: 'sessionId' })
   declare messages: HasMany<typeof ChatbotMessage>
+
+  get isOperatorControlled(): boolean {
+    return this.escalated && this.operatorId !== null && this.isActive
+  }
 }

@@ -25,12 +25,14 @@ const SESSION_KEY = 'althea_chatbot_session'
 const api = useApi()
 const { user } = useAuth()
 const { t } = useI18n()
+const transmit = useChatbotTransmit()
 
 const open = ref(false)
 const initialising = ref(false)
 const sending = ref(false)
 const escalating = ref(false)
 const session = ref<ChatbotSession | null>(null)
+const operatorName = ref<string | null>(null)
 const messages = ref<ChatbotMessage[]>([])
 const shortcuts = ref<FaqShortcut[]>([])
 const draft = ref('')
@@ -53,6 +55,21 @@ async function ensureSession() {
       session.value = parsed.session
       messages.value = parsed.messages
       shortcuts.value = parsed.shortcuts
+
+      transmit.subscribe(session.value.id, {
+        onMessage: (message) => {
+          messages.value.push(message)
+          persist()
+          scrollToBottom()
+        },
+        onTakeover: (data) => {
+          operatorName.value = data.operatorName
+        },
+        onHandback: () => {
+          operatorName.value = null
+        },
+      })
+
       return
     }
     const result = await api<{ session: ChatbotSession, messages: ChatbotMessage[], faqShortcuts: FaqShortcut[] }>(
@@ -69,6 +86,20 @@ async function ensureSession() {
     messages.value = result.messages
     shortcuts.value = result.faqShortcuts
     persist()
+
+    transmit.subscribe(session.value.id, {
+      onMessage: (message) => {
+        messages.value.push(message)
+        persist()
+        scrollToBottom()
+      },
+      onTakeover: (data) => {
+        operatorName.value = data.operatorName
+      },
+      onHandback: () => {
+        operatorName.value = null
+      },
+    })
   } finally {
     initialising.value = false
   }
@@ -174,6 +205,10 @@ function quickAsk(intent: string) {
   const q = SHORTCUT_QUERIES[intent] ?? intent
   send(q)
 }
+
+onUnmounted(() => {
+  transmit.unsubscribe()
+})
 </script>
 
 <template>
@@ -194,7 +229,7 @@ function quickAsk(intent: string) {
         <header class="flex items-center justify-between gap-3 border-b border-neutral-100 bg-brand-text px-4 py-3 text-white">
           <div>
             <p class="text-sm font-semibold">Assistant Althea</p>
-            <p class="text-xs opacity-80">{{ session?.escalated ? 'Conseiller mobilisé' : 'Réponses instantanées' }}</p>
+            <p class="text-xs opacity-80">{{ operatorName ? `Conseiller ${operatorName}` : session?.escalated ? 'Conseiller mobilisé' : 'Réponses instantanées' }}</p>
           </div>
           <div class="flex items-center gap-1">
             <button

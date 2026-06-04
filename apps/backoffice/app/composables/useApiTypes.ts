@@ -142,8 +142,12 @@ export interface AdminChatbotSession {
   escalatedAt: string | null
   isRead: boolean
   createdAt: string
+  operatorId: number | null
+  takenOverAt: string | null
+  isActive: boolean
   identity?: string
   user?: { id: number, email: string, fullName: string | null } | null
+  operator?: { id: number, email: string, fullName: string | null } | null
 }
 
 export interface AdminChatbotMessage {
