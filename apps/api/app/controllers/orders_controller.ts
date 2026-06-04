@@ -1,5 +1,6 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import { DateTime } from 'luxon'
+import { Exception } from '@adonisjs/core/exceptions'
 import db from '@adonisjs/lucid/services/db'
 import { createReadStream } from 'node:fs'
 import Order from '#models/order'
@@ -8,8 +9,10 @@ import Address from '#models/address'
 import Invoice from '#models/invoice'
 import { createOrderValidator } from '#validators/checkout'
 import { quoteCart } from '#services/cart_pricing'
-import { stripeClient } from '#services/stripe_service'
+import { stripeClient, toMinorUnits } from '#services/stripe_service'
 import { generateInvoicePdf } from '#services/invoice_generator'
+import { sendInvoiceCopy } from '#services/account_mailer'
+import logger from '@adonisjs/core/services/logger'
 
 export default class OrdersController {
   async index({ auth }: HttpContext) {
@@ -40,6 +43,18 @@ export default class OrdersController {
     const user = auth.getUserOrFail()
     const payload = await request.validateUsing(createOrderValidator)
 
+    // Check if payment intent already used (prevent race condition)
+    const existingOrder = await Order.query()
+      .where('stripePaymentIntentId', payload.paymentIntentId)
+      .first()
+
+    if (existingOrder) {
+      throw new Exception('Ce paiement a déjà été utilisé pour une commande.', {
+        status: 409,
+        code: 'E_PAYMENT_INTENT_ALREADY_USED',
+      })
+    }
+
     const [billing, shipping] = await Promise.all([
       Address.query()
         .where('id', payload.billingAddressId)
@@ -59,10 +74,60 @@ export default class OrdersController {
       })
     }
 
-    const intent = await stripeClient().paymentIntents.retrieve(payload.paymentIntentId)
+    // Retrieve and validate payment intent
+    let intent
+    try {
+      intent = await stripeClient().paymentIntents.retrieve(payload.paymentIntentId)
+    } catch (error) {
+      logger.error({ error, paymentIntentId: payload.paymentIntentId }, 'Failed to retrieve payment intent')
+      throw new Exception('Impossible de vérifier le paiement.', {
+        status: 500,
+        code: 'E_STRIPE_RETRIEVAL_FAILED',
+      })
+    }
+
+    // Validate payment status
     if (intent.status !== 'succeeded') {
       return response.unprocessableEntity({
         message: `Le paiement n'a pas été confirmé (statut: ${intent.status}).`,
+      })
+    }
+
+    // CRITICAL: Validate payment amount matches order total
+    const expectedAmount = toMinorUnits(quote.total)
+    if (intent.amount !== expectedAmount) {
+      logger.warn(
+        {
+          userId: user.id,
+          paymentIntentId: intent.id,
+          expectedAmount,
+          actualAmount: intent.amount,
+        },
+        'Payment amount mismatch detected'
+      )
+      throw new Exception(
+        'Le montant du paiement ne correspond pas au montant de la commande.',
+        {
+          status: 422,
+          code: 'E_PAYMENT_AMOUNT_MISMATCH',
+        }
+      )
+    }
+
+    // Validate payment belongs to this customer
+    if (intent.customer !== user.stripeCustomerId) {
+      logger.warn(
+        {
+          userId: user.id,
+          paymentIntentId: intent.id,
+          intentCustomer: intent.customer,
+          userCustomer: user.stripeCustomerId,
+        },
+        'Payment customer mismatch detected'
+      )
+      throw new Exception('Ce paiement appartient à un autre utilisateur.', {
+        status: 403,
+        code: 'E_PAYMENT_CUSTOMER_MISMATCH',
       })
     }
 
@@ -113,13 +178,19 @@ export default class OrdersController {
       return { order: created, invoiceNumber }
     })
 
-    const pdfPath = await generateInvoicePdf(
-      await Order.query().where('id', order.order.id).firstOrFail(),
-      order.invoiceNumber
-    )
-    const invoiceRecord = await Invoice.query().where('orderId', order.order.id).firstOrFail()
-    invoiceRecord.pdfPath = pdfPath
-    await invoiceRecord.save()
+    try {
+      const pdfPath = await generateInvoicePdf(
+        await Order.query().where('id', order.order.id).firstOrFail(),
+        order.invoiceNumber
+      )
+      const invoiceRecord = await Invoice.query().where('orderId', order.order.id).firstOrFail()
+      invoiceRecord.pdfPath = pdfPath
+      await invoiceRecord.save()
+
+      await sendInvoiceCopy(user, order.invoiceNumber)
+    } catch (err) {
+      logger.error({ err, orderId: order.order.id, invoiceNumber: order.invoiceNumber }, 'invoice.generation.failed')
+    }
 
     return response.created({
       order: await Order.query()

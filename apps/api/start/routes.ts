@@ -25,8 +25,12 @@ const AdminUsersController = () => import('#controllers/admin_users_controller')
 const AdminOrdersController = () => import('#controllers/admin_orders_controller')
 const AdminInvoicesController = () => import('#controllers/admin_invoices_controller')
 const AdminMessagesController = () => import('#controllers/admin_messages_controller')
+const StripeWebhooksController = () => import('#controllers/stripe_webhooks_controller')
 
 router.get('/', async () => ({ hello: 'world' }))
+
+// Stripe webhooks - must be before any middleware that reads request body
+router.post('/webhooks/stripe', [StripeWebhooksController, 'handle'])
 
 router.get('/openapi.yaml', async ({ response }) => {
   const file = path.join(app.makePath('..', '..', 'docs'), 'openapi.yaml')
