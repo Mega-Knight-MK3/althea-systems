@@ -1,5 +1,7 @@
 import type { HttpContext } from '@adonisjs/core/http'
+import { Exception } from '@adonisjs/core/exceptions'
 import db from '@adonisjs/lucid/services/db'
+import logger from '@adonisjs/core/services/logger'
 import PaymentMethod from '#models/payment_method'
 import {
   createPaymentMethodValidator,
@@ -33,10 +35,54 @@ export default class PaymentMethodsController {
     const user = auth.getUserOrFail()
     const payload = await request.validateUsing(createPaymentMethodValidator)
 
-    const stripePm = await stripeClient().paymentMethods.retrieve(payload.stripePaymentMethodId)
+    let stripePm
+    try {
+      stripePm = await stripeClient().paymentMethods.retrieve(payload.stripePaymentMethodId)
+    } catch (error) {
+      logger.error({ error, paymentMethodId: payload.stripePaymentMethodId }, 'Failed to retrieve payment method')
+      throw new Exception('Méthode de paiement invalide.', {
+        status: 422,
+        code: 'E_INVALID_PAYMENT_METHOD',
+      })
+    }
+
     if (stripePm.type !== 'card' || !stripePm.card) {
       return response.unprocessableEntity({ message: 'Type de carte non supporté.' })
     }
+
+    // CRITICAL: Verify payment method belongs to this customer
+    const customerId = await ensureStripeCustomer(user)
+    if (stripePm.customer && stripePm.customer !== customerId) {
+      logger.warn(
+        {
+          userId: user.id,
+          paymentMethodId: stripePm.id,
+          pmCustomer: stripePm.customer,
+          userCustomer: customerId,
+        },
+        'Attempted to save payment method from different customer'
+      )
+      throw new Exception('Cette méthode de paiement appartient à un autre utilisateur.', {
+        status: 403,
+        code: 'E_PAYMENT_METHOD_FORBIDDEN',
+      })
+    }
+
+    // Attach payment method to customer if not already attached
+    if (!stripePm.customer) {
+      try {
+        await stripeClient().paymentMethods.attach(stripePm.id, {
+          customer: customerId,
+        })
+      } catch (error) {
+        logger.error({ error, paymentMethodId: stripePm.id }, 'Failed to attach payment method')
+        throw new Exception("Impossible d'attacher la méthode de paiement.", {
+          status: 500,
+          code: 'E_PAYMENT_METHOD_ATTACH_FAILED',
+        })
+      }
+    }
+
     const card = stripePm.card
 
     const method = await db.transaction(async (trx) => {
@@ -85,7 +131,12 @@ export default class PaymentMethodsController {
     if (user.stripeCustomerId) {
       try {
         await stripeClient().paymentMethods.detach(method.stripePaymentMethodId)
-      } catch {}
+      } catch (error) {
+        logger.warn(
+          { error, paymentMethodId: method.stripePaymentMethodId, userId: user.id },
+          'Failed to detach payment method from Stripe (continuing with local deletion)'
+        )
+      }
     }
 
     await method.delete()

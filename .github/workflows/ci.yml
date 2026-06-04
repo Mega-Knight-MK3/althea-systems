@@ -68,6 +68,7 @@ jobs:
           SMTP_HOST: localhost
           SMTP_PORT: 1025
           STRIPE_SECRET_KEY: sk_test_dummy
+          STRIPE_WEBHOOK_SECRET: whsec_test_dummy
           STRIPE_CURRENCY: eur
 
   storefront:
