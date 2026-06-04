@@ -1,4 +1,6 @@
 import type { HttpContext } from '@adonisjs/core/http'
+import { DateTime } from 'luxon'
+import { errors } from '@adonisjs/core'
 import ContactMessage from '#models/contact_message'
 import ChatbotSession from '#models/chatbot_session'
 import ChatbotMessage from '#models/chatbot_message'
@@ -7,6 +9,7 @@ import {
   listChatSessionsValidator,
   listMessagesValidator,
 } from '#validators/admin_messages'
+import { broadcastNewMessage, notifyTakeover, notifyHandback } from '#services/chatbot_transmit'
 
 export default class AdminMessagesController {
   async indexContact({ request }: HttpContext) {
@@ -97,8 +100,43 @@ export default class AdminMessagesController {
       role: 'agent',
       content,
     })
+
+    await broadcastNewMessage(session.id, message)
+
     session.isRead = true
     await session.save()
     return { message, session }
+  }
+
+  async takeoverSession({ params, auth }: HttpContext) {
+    const session = await ChatbotSession.query()
+      .where('id', params.id)
+      .forUpdate()
+      .firstOrFail()
+
+    if (session.operatorId && session.isActive) {
+      throw new errors.E_BAD_REQUEST('Session already taken by another operator')
+    }
+
+    const operator = auth.user!
+    session.operatorId = operator.id
+    session.takenOverAt = DateTime.now()
+    session.isActive = true
+    await session.save()
+
+    await notifyTakeover(session.id, operator)
+
+    return { session }
+  }
+
+  async handbackSession({ params }: HttpContext) {
+    const session = await ChatbotSession.findOrFail(params.id)
+
+    session.isActive = false
+    await session.save()
+
+    await notifyHandback(session.id)
+
+    return { session }
   }
 }
