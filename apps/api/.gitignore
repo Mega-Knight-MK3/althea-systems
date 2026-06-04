@@ -13,7 +13,8 @@ tmp
 public/assets
 
 # Local storage (generated invoices, etc.)
-storage
+storage/*
+!storage/.gitkeep
 
 # Build tools specific
 npm-debug.log

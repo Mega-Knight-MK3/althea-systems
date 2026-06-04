@@ -26,6 +26,9 @@ export default class Invoice extends BaseModel {
   @column()
   declare pdfPath: string | null
 
+  @column()
+  declare adminPdfPath: string | null
+
   @column.dateTime()
   declare issuedAt: DateTime
 

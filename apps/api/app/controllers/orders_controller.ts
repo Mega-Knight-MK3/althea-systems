@@ -3,6 +3,7 @@ import { DateTime } from 'luxon'
 import { Exception } from '@adonisjs/core/exceptions'
 import db from '@adonisjs/lucid/services/db'
 import { createReadStream } from 'node:fs'
+import fs from 'node:fs/promises'
 import Order from '#models/order'
 import OrderItem from '#models/order_item'
 import Address from '#models/address'
@@ -11,6 +12,7 @@ import { createOrderValidator } from '#validators/checkout'
 import { quoteCart } from '#services/cart_pricing'
 import { stripeClient, toMinorUnits } from '#services/stripe_service'
 import { generateInvoicePdf } from '#services/invoice_generator'
+import { generateAdminInvoicePdf } from '#services/invoice_admin_generator'
 import { sendInvoiceCopy } from '#services/account_mailer'
 import logger from '@adonisjs/core/services/logger'
 
@@ -179,12 +181,17 @@ export default class OrdersController {
     })
 
     try {
-      const pdfPath = await generateInvoicePdf(
-        await Order.query().where('id', order.order.id).firstOrFail(),
-        order.invoiceNumber
-      )
+      const orderWithRelations = await Order.query().where('id', order.order.id).firstOrFail()
+
+      // Generate client invoice (simple, customer-facing)
+      const clientPdfPath = await generateInvoicePdf(orderWithRelations, order.invoiceNumber)
+
+      // Generate admin invoice (detailed, with legal mentions)
+      const adminPdfPath = await generateAdminInvoicePdf(orderWithRelations, order.invoiceNumber)
+
       const invoiceRecord = await Invoice.query().where('orderId', order.order.id).firstOrFail()
-      invoiceRecord.pdfPath = pdfPath
+      invoiceRecord.pdfPath = clientPdfPath
+      invoiceRecord.adminPdfPath = adminPdfPath
       await invoiceRecord.save()
 
       await sendInvoiceCopy(user, order.invoiceNumber)
@@ -211,6 +218,13 @@ export default class OrdersController {
 
     if (!order.invoice || !order.invoice.pdfPath) {
       return response.notFound({ message: 'Facture indisponible.' })
+    }
+
+    // Verify file exists before streaming
+    try {
+      await fs.access(order.invoice.pdfPath, fs.constants.R_OK)
+    } catch {
+      return response.notFound({ message: 'Le fichier PDF est introuvable.' })
     }
 
     response.header('Content-Type', 'application/pdf')

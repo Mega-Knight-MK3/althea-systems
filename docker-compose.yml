@@ -5,6 +5,7 @@ services:
       POSTGRES_USER: althea
       POSTGRES_PASSWORD: althea_secret
       POSTGRES_DB: althea_dev
+      POSTGRES_HOST_AUTH_METHOD: trust
     ports:
       - "5432:5432"
     volumes:
