@@ -10,6 +10,31 @@ jobs:
   api:
     name: API · typecheck + tests
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      mongodb:
+        image: mongo:7
+        env:
+          MONGO_INITDB_DATABASE: test_images
+        options: >-
+          --health-cmd "mongosh --eval 'db.runCommand({ ping: 1 })'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 27017:27017
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -22,6 +47,29 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter api typecheck
       - run: pnpm --filter api test
+        env:
+          TZ: UTC
+          PORT: 3333
+          HOST: localhost
+          LOG_LEVEL: info
+          APP_KEY: dGVzdF9hcHBfa2V5X2Zvcl9jaV90ZXN0aW5nX29ubHlfMzJfY2hhcnNfbG9uZw==
+          NODE_ENV: test
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: test
+          DB_PASSWORD: test
+          DB_DATABASE: test_db
+          MONGO_URI: mongodb://localhost:27017
+          MONGO_DATABASE: test_images
+          STOREFRONT_URL: http://localhost:3000
+          MAIL_DRIVER: log
+          MAIL_FROM_ADDRESS: no-reply@test.local
+          MAIL_FROM_NAME: Althea Test
+          SMTP_HOST: localhost
+          SMTP_PORT: 1025
+          STRIPE_SECRET_KEY: sk_test_dummy
+          STRIPE_WEBHOOK_SECRET: whsec_test_dummy
+          STRIPE_CURRENCY: eur
 
   storefront:
     name: Storefront · build
